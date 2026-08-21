@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import BlogPost, WorkSample
+from .models import BlogPost, Resume, WorkSample
 
 
 @admin.register(WorkSample)
@@ -15,3 +15,8 @@ class BlogPostAdmin(admin.ModelAdmin):
     list_filter = ("is_published",)
     search_fields = ("title", "excerpt", "body")
     prepopulated_fields = {"slug": ("title",)}
+
+
+@admin.register(Resume)
+class ResumeAdmin(admin.ModelAdmin):
+    list_display = ("__str__", "updated_at")

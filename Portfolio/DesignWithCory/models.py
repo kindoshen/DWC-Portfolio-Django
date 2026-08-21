@@ -29,6 +29,20 @@ class BlogPost(models.Model):
         return [p.strip() for p in self.body.split("\n\n") if p.strip()]
 
 
+class Resume(models.Model):
+    """Singleton-ish: the current resume PDF, swappable via admin without a deploy."""
+
+    file = models.FileField(upload_to="resume/")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Resume (updated {self.updated_at:%Y-%m-%d})"
+
+    @classmethod
+    def current(cls):
+        return cls.objects.order_by("-updated_at").first()
+
+
 class WorkSample(models.Model):
     """A featured project on the Work Samples page.
 
