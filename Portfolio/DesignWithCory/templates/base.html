@@ -1,4 +1,5 @@
 {# templates/base.html — site shell. Django 4.2 Jinja2 backend (django.template.backends.jinja2.Jinja2). #}
+{% load static %}
 <!DOCTYPE html>
 <html style="font-size: 16px;" lang="{% block html_lang %}en{% endblock %}">
 <head>
@@ -32,7 +33,7 @@
     <meta property="og:title" content="Home">
     <meta property="og:type" content="website">
   <meta name="referrer" content="origin"><meta data-intl-tel-input-cdn-path="{% static 'intlTelInput/' %}"></head>
-<body data-home-page="{{ url('home') }}" data-home-page-title="Home" data-path-to-root="{% static '' %}" data-include-products="false" class="u-body u-clearfix u-xl-mode{% block body_class %}{% endblock %}" data-lang="en">
+<body data-home-page="{% url 'designWithCory' %}" data-home-page-title="Home" data-path-to-root="{% static '' %}" data-include-products="false" class="u-body u-clearfix u-xl-mode{% block body_class %}{% endblock %}" data-lang="en">
 {% block header %}{% include "includes/header.html" %}{% endblock %}
 
 {% block content %}{% endblock %}
