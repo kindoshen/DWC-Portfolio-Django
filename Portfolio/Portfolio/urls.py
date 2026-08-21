@@ -25,6 +25,7 @@ from DesignWithCory.views import robots_txt
 
 urlpatterns = [
     path('', include('DesignWithCory.urls')),
+    path('contact/', include('crm.urls')),
     path('admin/', admin.site.urls),
     # Browsers probe /favicon.ico directly regardless of the <link rel="icon">
     # tags in base.html, so redirect it to the real file under STATIC_URL.

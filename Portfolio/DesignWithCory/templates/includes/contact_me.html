@@ -9,7 +9,8 @@
                 <div class="u-container-layout u-valign-middle-lg u-valign-middle-md u-valign-middle-sm u-valign-middle-xs u-container-layout-1">
                   <h2 class="u-align-center-md u-align-center-sm u-align-center-xs u-align-left-lg u-align-left-xl u-text u-text-1"> Get in Touch</h2>
                   <div class="custom-expanded u-align-left u-form u-form-1">
-                    <form action="https://service.nicepagesrv.com/form/v4/form-process" class="u-clearfix u-form-spacing-28 u-form-vertical u-inner-form" style="padding: 0px;" source="email" name="form">
+                    <form id="contact-form" action="{% url 'contact_submit' %}" method="post" class="u-clearfix u-form-spacing-28 u-form-vertical u-inner-form" style="padding: 0px;" name="form">
+                      {% csrf_token %}
                       <div class="u-form-group u-form-name u-label-top">
                         <label for="name-5a14" class="u-label">Name</label>
                         <input type="text" placeholder="Enter your Name" id="name-5a14" name="name" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-1" required="">
@@ -18,16 +19,28 @@
                         <label for="email-5a14" class="u-label">Email</label>
                         <input type="email" placeholder="Enter a valid email address" id="email-5a14" name="email" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-2" required="">
                       </div>
+                      <div class="u-form-group u-label-top">
+                        <label for="phone-5a14" class="u-label">Phone</label>
+                        <input type="tel" placeholder="Enter your phone number" id="phone-5a14" name="phone" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-3" required="">
+                      </div>
+                      <div class="u-form-group u-label-top">
+                        <label for="message-5a14" class="u-label">What are you looking to build?</label>
+                        <textarea placeholder="A sentence or two is plenty" id="message-5a14" name="message" rows="3" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-4"></textarea>
+                      </div>
+                      {# Honeypot — invisible to real visitors, irresistible to form-filling bots. #}
+                      <div aria-hidden="true" style="position: absolute; left: -9999px; top: -9999px;">
+                        <label for="website-5a14">Website</label>
+                        <input type="text" id="website-5a14" name="website" tabindex="-1" autocomplete="off">
+                      </div>
                       <div class="u-align-right u-form-group u-form-submit u-label-top">
                         <a href="#" class="u-active-black u-border-none u-btn u-btn-round u-btn-submit u-button-style u-hover-black u-palette-1-base u-radius u-text-active-white u-text-body-alt-color u-text-hover-white u-btn-1">Submit</a>
                         <input type="submit" value="submit" class="u-form-control-hidden">
                       </div>
                       <div class="u-form-send-message u-form-send-success">Thank you! Your message has been sent.</div>
                       <div class="u-form-send-error u-form-send-message">Unable to send your message. Please fix errors then try again.</div>
-                      <input type="hidden" value="" name="recaptchaResponse">
-                      <input type="hidden" name="formServices" value="cb585d8e-e036-3b1d-ddbf-73f1d2198685">
                     </form>
                   </div>
+                  <script src="{% static 'js/contact-form.js' %}" defer></script>
                 </div>
               </div>
               <div class="u-container-align-center-md u-container-align-center-sm u-container-align-center-xs u-container-style u-layout-cell u-size-30-lg u-size-30-xl u-size-60-md u-size-60-sm u-size-60-xs u-layout-cell-2" data-animation-name="customAnimationIn" data-animation-duration="1500" data-animation-delay="200" data-animation-direction="">

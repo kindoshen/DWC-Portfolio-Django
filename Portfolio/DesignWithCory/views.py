@@ -2,11 +2,11 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.http import HttpResponse
-from django.template import loader
 
 def designWithCory(request):
-  template = loader.get_template('landing.html')
-  return HttpResponse(template.render())
+  # render() (not a bare template.render()) binds the request to the context,
+  # which {% csrf_token %} needs to issue a real token for the contact form.
+  return render(request, 'landing.html')
 
 def robots_txt(request):
   # Allow indexing of every public page (SEO), but keep the admin, uploaded

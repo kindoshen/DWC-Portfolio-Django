@@ -52,7 +52,9 @@ class Lead(TimestampedModel, Attachable):
         LOST = "lost", "Lost"
 
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="leads")
-    project_summary = models.TextField(help_text="What they want built, in their own words.")
+    project_summary = models.TextField(
+        blank=True, default="", help_text="What they want built, in their own words."
+    )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.NEW)
     source = models.CharField(
         max_length=100, default="Contact Form", help_text="Where this lead came from."
