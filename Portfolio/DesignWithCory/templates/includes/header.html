@@ -1,7 +1,7 @@
 {# templates/includes/header.html — section partial, extracted from portfolio_index_pre_template.html #}
 {% load static %}
 <header class="u-clearfix u-header u-header" id="sec-d472"><div class="u-clearfix u-sheet u-valign-middle u-sheet-1">
-        <a href="#" class="u-image u-logo u-image-1" data-image-width="1254" data-image-height="1254">
+        <a href="{% url 'designWithCory' %}" class="u-image u-logo u-image-1" data-image-width="1254" data-image-height="1254">
           <img src="{% static 'images/ChatGPTImageAug112026at01_52_09AM.png' %}" class="u-logo-image u-logo-image-1">
         </a>
         <nav class="u-menu u-menu-one-level u-offcanvas u-menu-1" role="navigation">
@@ -17,7 +17,7 @@
 </li><li role="none" class="u-nav-item"><a role="menuitem" class="u-border-2 u-border-active-grey-30 u-border-grey-30 u-border-hover-grey-30 u-border-no-bottom u-border-no-left u-border-no-top u-button-style u-nav-link u-text-active-palette-1-base u-text-grey-90 u-text-hover-palette-1-base u-nav-1" href="/about">About</a>
 </li><li role="none" class="u-nav-item"><a role="menuitem" class="u-border-2 u-border-active-grey-30 u-border-grey-30 u-border-hover-grey-30 u-border-no-bottom u-border-no-left u-border-no-top u-button-style u-nav-link u-text-active-palette-1-base u-text-grey-90 u-text-hover-palette-1-base u-nav-1" href="/portfolio">Work Samples</a>
 </li><li role="none" class="u-nav-item"><a role="menuitem" class="u-border-2 u-border-active-grey-30 u-border-grey-30 u-border-hover-grey-30 u-border-no-bottom u-border-no-left u-border-no-top u-button-style u-nav-link u-text-active-palette-1-base u-text-grey-90 u-text-hover-palette-1-base u-nav-1" href="/blog">Learning Materials</a>
-</li><li role="none" class="u-nav-item"><a tabindex="-1" role="menuitem" class="u-border-2 u-border-active-grey-30 u-border-grey-30 u-border-hover-grey-30 u-border-no-bottom u-border-no-left u-border-no-top u-button-style u-nav-link u-text-active-palette-1-base u-text-grey-90 u-text-hover-palette-1-base u-nav-1">Contact</a>
+</li><li role="none" class="u-nav-item"><a role="menuitem" class="u-border-2 u-border-active-grey-30 u-border-grey-30 u-border-hover-grey-30 u-border-no-bottom u-border-no-left u-border-no-top u-button-style u-nav-link u-text-active-palette-1-base u-text-grey-90 u-text-hover-palette-1-base u-nav-1" href="{% url 'designWithCory' %}#block-11">Contact</a>
 </li></ul>
           </div>
           <div class="u-custom-menu u-nav-container-collapse" id="5fca" role="region" aria-label="Menu panel">
@@ -28,7 +28,7 @@
 </li><li role="none" class="u-nav-item"><a role="menuitem" class="u-button-style u-nav-link" href="/about">About</a>
 </li><li role="none" class="u-nav-item"><a role="menuitem" class="u-button-style u-nav-link" href="/portfolio">Work Samples</a>
 </li><li role="none" class="u-nav-item"><a role="menuitem" class="u-button-style u-nav-link" href="/blog">Learning Materials</a>
-</li><li role="none" class="u-nav-item"><a tabindex="-1" role="menuitem" class="u-button-style u-nav-link">Contact</a>
+</li><li role="none" class="u-nav-item"><a role="menuitem" class="u-button-style u-nav-link" href="{% url 'designWithCory' %}#block-11">Contact</a>
 </li></ul>
               </div>
             </div>
