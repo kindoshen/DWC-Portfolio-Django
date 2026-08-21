@@ -19,10 +19,15 @@ from django.urls import path, include
 from django.views.generic import RedirectView
 from django.templatetags.static import static
 
+from DesignWithCory.views import robots_txt
+
 urlpatterns = [
     path('', include('DesignWithCory.urls')),
     path('admin/', admin.site.urls),
     # Browsers probe /favicon.ico directly regardless of the <link rel="icon">
     # tags in base.html, so redirect it to the real file under STATIC_URL.
     path('favicon.ico', RedirectView.as_view(url=static('favicon/favicon.ico'), permanent=True)),
+    # robots.txt must be served at the literal domain root, not under
+    # STATIC_URL, so it gets its own view rather than living as a static file.
+    path('robots.txt', robots_txt),
 ]
