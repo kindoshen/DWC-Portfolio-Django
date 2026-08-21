@@ -8,6 +8,9 @@ def designWithCory(request):
   # which {% csrf_token %} needs to issue a real token for the contact form.
   return render(request, 'landing.html')
 
+def about(request):
+  return render(request, 'about.html')
+
 def robots_txt(request):
   # Allow indexing of every public page (SEO), but keep the admin, uploaded
   # CRM/media files, and the resume viewer out of search results and caches.

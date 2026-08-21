@@ -43,7 +43,9 @@
     <meta property="og:description" content="{% block og_description %}Cory Comly is a senior software engineer, blockchain consultant, and security analyst with 12+ years of experience building secure, scalable web and mobile products.{% endblock %}">
     <meta property="og:image" content="{% static 'images/ChatGPTImageAug112026at01_52_09AM.png' %}">
     <meta property="og:type" content="website">
-  <meta name="referrer" content="origin"><meta data-intl-tel-input-cdn-path="{% static 'intlTelInput/' %}"></head>
+  <meta name="referrer" content="origin"><meta data-intl-tel-input-cdn-path="{% static 'intlTelInput/' %}">
+    {% block extra_css %}{% endblock %}
+</head>
 <body data-home-page="{% url 'designWithCory' %}" data-home-page-title="Home" data-path-to-root="{% static '' %}" data-include-products="false" class="u-body u-clearfix u-xl-mode{% block body_class %}{% endblock %}" data-lang="en">
 {% block header %}{% include "includes/header.html" %}{% endblock %}
 

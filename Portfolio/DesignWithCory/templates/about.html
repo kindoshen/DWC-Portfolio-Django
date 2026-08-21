@@ -1,0 +1,48 @@
+{# templates/about.html — About page: mostly text, a couple of photos, extends base.html. #}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}About{% endblock %}
+{% block meta_description %}Meet Cory Comly — a senior software engineer, blockchain consultant, and security analyst with 12+ years of experience, from a Twitter contract in 2011 to building and auditing production systems today.{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/pages.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <h1>About Cory</h1>
+  <p>I'm a software engineer who's spent the last 12+ years building things that have to actually work — production backends, client-facing apps, and the occasional security audit for teams who'd rather find their own weak points first.</p>
+</section>
+
+<div class="page-media-row">
+  <img src="{% static 'images/ChatGPTImageAug112026at01_01_18AM.png' %}" alt="Cory at his desk, working late">
+  <div class="page-copy">
+    <h2>How I got here</h2>
+    <p>I started out doing full-stack contract work in my early twenties — Twitter was one of my first real clients, back in 2011 and 2012, which taught me fast that "ship it" and "ship it right" aren't always the same thing under a deadline.</p>
+    <p>Since then I've moved between full-stack development, blockchain consulting, and security auditing, usually landing wherever a team needs someone who can own a problem end-to-end rather than just their one slice of it.</p>
+  </div>
+</div>
+
+<section class="page-section page-section--alt">
+  <div class="page-copy">
+    <h2>What I actually do</h2>
+    <p>Most of my work falls into one of three buckets: building the thing (full-stack apps, APIs, dashboards), advising on it (blockchain architecture, technical strategy), or breaking it on purpose before someone else does (security audits, penetration testing).</p>
+    <p>Recent projects have ranged from a decentralized bridge that lets Helium's HNT token move onto EVM-compatible chains, to EstiMate — a job-estimating app I built for a painting contractor who was still quoting jobs on paper — to PwnHub, a bug-bounty automation platform I run for my own security research.</p>
+  </div>
+</section>
+
+<div class="page-media-row reverse">
+  <img src="{% static 'images/ChatGPTImageAug112026at01_19_35AM.png' %}" alt="Cory presenting project results to a team">
+  <div class="page-copy">
+    <h2>How I work</h2>
+    <p>I've led engineering teams, and I've been the only engineer on a project — so I know how to operate either way. I lead with the same questions on every engagement: what are we actually solving, what does "done" look like, and how do we keep scope from quietly doubling three weeks in.</p>
+    <p>Clients get plain-English updates, not jargon, and a quote that says exactly what's included and what isn't.</p>
+  </div>
+</div>
+
+<section class="page-cta">
+  <a href="{% url 'designWithCory' %}#block-8" class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius">See my work</a>
+  <a href="{% url 'designWithCory' %}#block-11" class="u-btn u-btn-round u-button-style u-active-black u-hover-black u-border-2 u-border-palette-1-base u-text-palette-1-base">Get in touch</a>
+</section>
+{% endblock %}
