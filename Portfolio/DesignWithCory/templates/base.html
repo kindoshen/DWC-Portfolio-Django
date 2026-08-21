@@ -1,13 +1,13 @@
-{# templates/base.html — site shell. Django 4.2 Jinja2 backend (django.template.backends.jinja2.Jinja2). #}
+{# templates/base.html — site shell. Django 4.2, django.template.backends.django.DjangoTemplates. #}
 {% load static %}
 <!DOCTYPE html>
 <html style="font-size: 16px;" lang="{% block html_lang %}en{% endblock %}">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="utf-8">
-    <meta name="keywords" content="​I’m&nbsp;Matt, ​Hi, I’m Matt. Nice to meet you., ​My Quality Services, ​My Works Skills, ​Let&amp;apos;s Work Together. Fixed A Meeting, ​Here are some of my clients, ​My Special Skills, ​My Works, ​Latest Tips &amp;amp; Tricks, Clients, Creativity, and Coffee, The Art of Branding, From Sketch to Screen, ​Get in Touch">
-    <meta name="description" content="{% block meta_description %}{% endblock %}">
-    <title>{% block title %}Home{% endblock %}</title>
+    <meta name="keywords" content="​Cory Comly, ​Hi, I’m Cory. Nice to meet you., ​Software Engineering Services, ​My Work Samples, ​Let&amp;apos;s Work Together. Get a Quote, ​Here are some of my clients, ​My Special Skills, ​My Works, ​Latest Tips &amp;amp; Tricks, Clients, Creativity, and Coffee, The Art of Branding, From Sketch to Screen, ​Get in Touch">
+    <meta name="description" content="{% block meta_description %}Cory Comly is a senior software engineer, blockchain consultant, and security analyst with 12+ years of experience building secure, scalable web and mobile products.{% endblock %}">
+    <title>{% block title %}Home{% endblock %} | Design With Cory</title>
     <link rel="stylesheet" href="{% static 'css/nicepage.css' %}" media="screen">
 <link rel="stylesheet" href="{% static 'css/index.css' %}" media="screen">
     <script class="u-script" type="text/javascript" src="{% static 'js/jquery.js' %}" defer=""></script>
@@ -26,11 +26,14 @@
 		]
 }</script>
     <meta name="theme-color" content="#7190f0">
-    <meta name="twitter:site" content="@">
+    <meta name="twitter:site" content="@kindoshen">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Home">
-    <meta name="twitter:description" content="">
-    <meta property="og:title" content="Home">
+    <meta name="twitter:title" content="{% block title %}Home{% endblock %} | Design With Cory">
+    <meta name="twitter:description" content="{% block meta_description %}Cory Comly is a senior software engineer, blockchain consultant, and security analyst with 12+ years of experience building secure, scalable web and mobile products.{% endblock %}">
+    <meta name="twitter:image" content="{% static 'images/ChatGPTImageAug112026at01_52_09AM.png' %}">
+    <meta property="og:title" content="{% block title %}Home{% endblock %} | Design With Cory">
+    <meta property="og:description" content="{% block meta_description %}Cory Comly is a senior software engineer, blockchain consultant, and security analyst with 12+ years of experience building secure, scalable web and mobile products.{% endblock %}">
+    <meta property="og:image" content="{% static 'images/ChatGPTImageAug112026at01_52_09AM.png' %}">
     <meta property="og:type" content="website">
   <meta name="referrer" content="origin"><meta data-intl-tel-input-cdn-path="{% static 'intlTelInput/' %}"></head>
 <body data-home-page="{% url 'designWithCory' %}" data-home-page-title="Home" data-path-to-root="{% static '' %}" data-include-products="false" class="u-body u-clearfix u-xl-mode{% block body_class %}{% endblock %}" data-lang="en">
