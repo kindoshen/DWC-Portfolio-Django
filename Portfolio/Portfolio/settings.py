@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +21,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-7l0)lqyw3nl+qv6g-n$j&a1hd5dya^*1i0=tl@km20fcs@c)h='
+# Falls back to the original dev-only key so local runs need no setup;
+# set DJANGO_SECRET_KEY before this ever serves real traffic.
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-7l0)lqyw3nl+qv6g-n$j&a1hd5dya^*1i0=tl@km20fcs@c)h=',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if h.strip()
+]
 
 
 # Application definition
@@ -122,7 +130,31 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# User/admin-uploaded files: CRM notes/attachments, work-sample images, the
+# resume PDF. Served by Django itself in DEBUG (see urls.py); a real
+# deployment should front this with a proper storage backend.
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Email
+# https://docs.djangoproject.com/en/4.2/topics/email/
+# Defaults to printing mail to the console so the contact form works out of
+# the box in dev; set DJANGO_EMAIL_HOST (+ USER/PASSWORD) to send for real.
+if os.environ.get('DJANGO_EMAIL_HOST'):
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.environ['DJANGO_EMAIL_HOST']
+    EMAIL_PORT = int(os.environ.get('DJANGO_EMAIL_PORT', '587'))
+    EMAIL_HOST_USER = os.environ.get('DJANGO_EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('DJANGO_EMAIL_HOST_PASSWORD', '')
+    EMAIL_USE_TLS = os.environ.get('DJANGO_EMAIL_USE_TLS', 'True') == 'True'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+DEFAULT_FROM_EMAIL = os.environ.get('DJANGO_DEFAULT_FROM_EMAIL', 'Inquiry@DesignWithCory.com')
+CONTACT_NOTIFICATION_EMAIL = 'Inquiry@DesignWithCory.com'
