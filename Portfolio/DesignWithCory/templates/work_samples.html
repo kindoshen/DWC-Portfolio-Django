@@ -1,0 +1,31 @@
+{# templates/work_samples.html — Work Samples page: one reusable partial per project. #}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Work Samples{% endblock %}
+{% block meta_description %}Real projects by Cory Comly — a decentralized bridge for Helium's HNT token, a job-estimating app for a painting contractor, a bug-bounty automation platform, and an interactive design-pattern reference.{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/pages.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <h1>Work Samples</h1>
+  <p>A few real projects, not mockups — what they do, why they exist, and what it took to build them.</p>
+</section>
+
+{% for sample in work_samples %}
+  {% include "includes/work_sample_item.html" with sample=sample index=forloop.counter0 %}
+{% empty %}
+  <section class="page-section">
+    <div class="page-copy" style="text-align: center;">
+      <p>New samples are on the way — check back soon.</p>
+    </div>
+  </section>
+{% endfor %}
+
+<section class="page-cta">
+  <a href="{% url 'designWithCory' %}#block-11" class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius">Start a project</a>
+</section>
+{% endblock %}

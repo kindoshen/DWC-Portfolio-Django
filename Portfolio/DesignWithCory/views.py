@@ -3,6 +3,8 @@ from django.shortcuts import render
 # Create your views here.
 from django.http import HttpResponse
 
+from .models import WorkSample
+
 def designWithCory(request):
   # render() (not a bare template.render()) binds the request to the context,
   # which {% csrf_token %} needs to issue a real token for the contact form.
@@ -10,6 +12,9 @@ def designWithCory(request):
 
 def about(request):
   return render(request, 'about.html')
+
+def work_samples(request):
+  return render(request, 'work_samples.html', {'work_samples': WorkSample.objects.all()})
 
 def robots_txt(request):
   # Allow indexing of every public page (SEO), but keep the admin, uploaded

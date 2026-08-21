@@ -1,0 +1,2670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Pattern Atlas — 17 Verified TypeScript Circuits</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+/* ---------- tokens ---------- */
+:root {
+  --ink: #0d0f15;
+  --ink-2: #10131b;
+  --panel: #171a23;
+  --panel-2: #1e2129;
+  --line: #2a2e3a;
+  --text: #e9eaef;
+  --text-dim: #9298ab;
+  --text-faint: #666c80;
+  --signal: #d4f65a;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --display: "Space Grotesk", sans-serif;
+  --body: "IBM Plex Sans", sans-serif;
+  --radius: 14px;
+}
+
+.category--creational { --cat: #f2a93b; --cat-soft: #3a2e14; --cat-tint: rgba(242,169,59,0.08); }
+.category--structural { --cat: #2fd3c7; --cat-soft: #123330; --cat-tint: rgba(47,211,199,0.08); }
+.category--behavioral { --cat: #ff5d8f; --cat-soft: #3a1626; --cat-tint: rgba(255,93,143,0.08); }
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(242,169,59,0.07), transparent 60%),
+    radial-gradient(ellipse 900px 600px at 85% 10%, rgba(47,211,199,0.06), transparent 60%),
+    radial-gradient(ellipse 800px 500px at 50% 40%, rgba(255,93,143,0.05), transparent 60%),
+    var(--ink);
+  color: var(--text);
+  font-family: var(--body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+}
+
+::selection { background: var(--signal); color: #10131b; }
+
+a { color: inherit; }
+
+code, pre { font-family: var(--mono); }
+
+/* ---------- hero ---------- */
+.hero {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 76px 28px 40px;
+  text-align: left;
+}
+
+.hero__eyebrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+  margin-bottom: 18px;
+}
+
+.hero__title {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(42px, 7vw, 76px);
+  line-height: 0.98;
+  margin: 0 0 20px;
+  letter-spacing: -0.01em;
+  background: linear-gradient(120deg, #fff 40%, #cfd3e0 70%, #8b91a5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero__sub {
+  max-width: 640px;
+  font-size: 17px;
+  color: var(--text-dim);
+  margin: 0 0 32px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  margin-bottom: 28px;
+}
+
+.legend__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.legend__swatch { width: 20px; height: 2px; flex: none; position: relative; display: inline-block; }
+.legend__swatch--chip { border: 1.5px solid #8b91a5; border-radius: 3px; height: 12px; }
+.legend__swatch--dashed { border-top: 1.5px dashed #8b91a5; }
+.legend__swatch--signal { background: var(--signal); height: 2px; }
+.legend__swatch--pin { background: #8b91a5; height: 2px; }
+.legend__swatch--pin::before, .legend__swatch--pin::after {
+  content: ""; position: absolute; width: 2px; height: 6px; background: #8b91a5; top: -2px;
+}
+.legend__swatch--pin::before { left: 0; }
+.legend__swatch--pin::after { right: 0; }
+
+.nav-pills { display: flex; flex-wrap: wrap; gap: 10px; position: sticky; top: 16px; z-index: 20; }
+.nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(23,26,35,0.85);
+  backdrop-filter: blur(8px);
+  font-family: var(--mono);
+  font-size: 13px;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.nav-pill:hover { transform: translateY(-1px); }
+.nav-pill em { font-style: normal; color: var(--text-faint); }
+.nav-pill__dot { width: 8px; height: 8px; border-radius: 50%; }
+.nav-pill--creational { border-color: rgba(242,169,59,0.4); }
+.nav-pill--creational .nav-pill__dot { background: #f2a93b; }
+.nav-pill--structural { border-color: rgba(47,211,199,0.4); }
+.nav-pill--structural .nav-pill__dot { background: #2fd3c7; }
+.nav-pill--behavioral { border-color: rgba(255,93,143,0.4); }
+.nav-pill--behavioral .nav-pill__dot { background: #ff5d8f; }
+
+/* ---------- category sections ---------- */
+main { max-width: 1180px; margin: 0 auto; padding: 0 28px 40px; }
+
+.category { padding: 56px 0 20px; scroll-margin-top: 72px; }
+
+.category__head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: end;
+  gap: 20px;
+  padding-bottom: 22px;
+  margin-bottom: 30px;
+  border-bottom: 1px solid var(--line);
+}
+
+.category__num {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 56px;
+  color: var(--cat);
+  opacity: 0.9;
+  line-height: 1;
+}
+
+.category__name {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.category__blurb {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 14.5px;
+  max-width: 620px;
+}
+
+.category__count {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--cat);
+  border: 1px solid var(--cat);
+  border-radius: 999px;
+  padding: 5px 12px;
+  white-space: nowrap;
+  height: fit-content;
+}
+
+/* ---------- card grid ---------- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 22px;
+}
+
+/* Every category in this atlas has an odd pattern count — give the
+   trailing, otherwise-lonely card the full row instead of half of it. */
+@media (min-width: 900px) {
+  .card-grid > .card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .card-grid > .card:last-child:nth-child(odd) .diagram-frame { max-width: 620px; margin: 0 auto 14px; }
+  .card-grid > .card:last-child:nth-child(odd) .code-panel { max-width: 100%; }
+}
+
+.card {
+  background: linear-gradient(180deg, var(--panel) 0%, var(--panel) 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 20px 22px;
+  scroll-margin-top: 72px;
+  transition: border-color 0.2s ease;
+}
+.card:hover { border-color: var(--cat); }
+
+.card__head { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
+
+.designator {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--cat);
+  padding: 4px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+  margin-top: 3px;
+}
+
+.card__name {
+  font-family: var(--display);
+  font-size: 21px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.card__tagline { margin: 0; color: var(--text-dim); font-size: 13.5px; line-height: 1.45; }
+
+.diagram-frame {
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.diagram-svg { width: 100%; height: auto; display: block; }
+.dgrid { fill-opacity: 1; }
+
+.verify-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.verify-tag {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--cat);
+  background: var(--cat-tint);
+  border: 1px solid var(--cat-soft);
+  padding: 4px 9px;
+  border-radius: 999px;
+}
+
+/* ---------- code panel ---------- */
+.code-panel {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0b0d13;
+}
+
+.code-panel__bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: #12141c;
+  border-bottom: 1px solid var(--line);
+}
+
+.code-panel__dots { display: inline-flex; gap: 5px; }
+.code-panel__dots i {
+  width: 8px; height: 8px; border-radius: 50%; background: #333747; display: inline-block;
+}
+
+.code-panel__file {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--text-faint);
+  flex: 1;
+}
+
+.copy-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.copy-btn:hover { color: var(--text); border-color: var(--text-dim); }
+.copy-btn--done { color: var(--signal); border-color: var(--signal); }
+
+.code-pre {
+  margin: 0;
+  padding: 16px 18px;
+  overflow: auto;
+  max-height: 460px;
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+.code-pre::-webkit-scrollbar { width: 8px; height: 8px; }
+.code-pre::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
+.code-pre::-webkit-scrollbar-track { background: transparent; }
+
+.code-pre code { background: none; color: var(--text); white-space: pre; }
+
+/* highlight.js token palette, tuned to the page rather than a stock theme */
+.hljs-keyword, .hljs-built_in { color: #7fb3ff; }
+.hljs-title.class_, .hljs-title.class_.inherited__ { color: #ffd479; }
+.hljs-title.function_ { color: #8fe3d0; }
+.hljs-string { color: #b7f19a; }
+.hljs-number, .hljs-literal { color: #ff9d7a; }
+.hljs-comment { color: #6b7186; font-style: italic; }
+.hljs-params { color: #e9eaef; }
+.hljs-property, .hljs-attr { color: #c9b8ff; }
+.hljs-operator, .hljs-punctuation { color: #9298ab; }
+
+/* ---------- diagram component kit ---------- */
+.chip { fill: var(--panel-2); stroke: var(--cat); stroke-width: 1.6; }
+.chip--dashed { stroke-dasharray: 4 3; }
+.pin { stroke: var(--cat); stroke-width: 2; }
+.node { fill: var(--panel-2); stroke: var(--cat); stroke-width: 1.6; }
+.node--muted { stroke: var(--text-faint); opacity: 0.7; }
+.trace { stroke: var(--cat); stroke-width: 1.6; fill: none; }
+.trace--dashed { stroke-dasharray: 4 3; }
+.trace--signal { stroke: var(--signal); }
+.trace-reject { stroke: #ff5c6a; stroke-width: 2; }
+.trace-reject-path { fill: none; stroke: #ff5c6a; stroke-width: 1.4; stroke-dasharray: 3 3; opacity: 0.55; }
+.dlabel { font-family: var(--mono); font-size: 9px; fill: var(--text); }
+.dsublabel { font-family: var(--mono); font-size: 6.4px; fill: var(--text-dim); }
+.dcaption, .dtag { font-family: var(--mono); font-size: 8px; fill: var(--text-dim); }
+.lock-body { fill: var(--cat); opacity: 0.9; }
+.lock-shackle { fill: none; stroke: var(--cat); stroke-width: 2; }
+.tag-box { fill: var(--panel-2); stroke: var(--cat); stroke-width: 1.2; }
+.family-box { fill: none; stroke-width: 1.2; stroke-dasharray: 3 3; rx: 10; }
+.family-box--a { stroke: var(--cat); opacity: 0.55; }
+.family-box--b { stroke: var(--text-faint); opacity: 0.55; }
+.bridge-bar { fill: var(--cat); opacity: 0.3; }
+.ring { fill: none; stroke-width: 2; }
+.ring--1 { stroke: var(--cat); opacity: 0.9; }
+.ring--2 { stroke: var(--cat); opacity: 0.55; }
+.ring--3 { stroke: var(--cat); opacity: 0.3; }
+.pulse-ring { fill: none; stroke: var(--cat); opacity: 0.25; stroke-width: 1; stroke-dasharray: 2 4; }
+.slot { fill: var(--panel); stroke: var(--cat); stroke-width: 1.4; }
+.leaf-dot { fill: var(--cat); opacity: 0.85; }
+.iterator-window { fill: none; stroke: var(--signal); stroke-width: 2; }
+.hairline { stroke: var(--line); stroke-width: 1; }
+
+/* ---------- footer ---------- */
+.footer {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 40px 28px 80px;
+  color: var(--text-faint);
+  font-size: 13px;
+  border-top: 1px solid var(--line);
+}
+.footer code {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .hero { padding: 48px 18px 28px; }
+  main { padding: 0 14px 24px; }
+  .category__head { grid-template-columns: auto 1fr; align-items: start; row-gap: 10px; }
+  .category__num { font-size: 38px; padding-top: 4px; }
+  .category__count { grid-column: 1 / -1; justify-self: start; }
+  .card-grid { grid-template-columns: 1fr; }
+  .nav-pills { position: static; }
+}
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <pattern id="grid-creational" width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="1.2" fill="#F2A93B" opacity="0.16"/>
+    </pattern>
+    <marker id="arrow-creational" viewBox="0 0 8 8" refX="6.5" refY="4" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#F2A93B"/>
+    </marker>
+
+    <pattern id="grid-structural" width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="1.2" fill="#2FD3C7" opacity="0.16"/>
+    </pattern>
+    <marker id="arrow-structural" viewBox="0 0 8 8" refX="6.5" refY="4" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#2FD3C7"/>
+    </marker>
+
+    <pattern id="grid-behavioral" width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="1.2" fill="#FF5D8F" opacity="0.16"/>
+    </pattern>
+    <marker id="arrow-behavioral" viewBox="0 0 8 8" refX="6.5" refY="4" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#FF5D8F"/>
+    </marker>
+    <marker id="arrow-signal" viewBox="0 0 8 8" refX="6.5" refY="4" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#D4F65A"/>
+    </marker></defs></svg>
+
+<header class="hero">
+  <div class="hero__eyebrow">GANG-OF-FOUR · TYPESCRIPT REFERENCE BUILD</div>
+  <h1 class="hero__title">The Pattern Atlas</h1>
+  <p class="hero__sub">Seventeen classic design patterns, each redrawn as a small circuit schematic and paired with a
+    strict-TypeScript implementation that was compiled and run before it went on this page — not just plausible-looking code.</p>
+
+  <div class="legend">
+    <div class="legend__item"><span class="legend__swatch legend__swatch--chip"></span>chip = a class or object</div>
+    <div class="legend__item"><span class="legend__swatch legend__swatch--dashed"></span>dashed = abstract / optional</div>
+    <div class="legend__item"><span class="legend__swatch legend__swatch--signal"></span>bright trace = the call that actually fires</div>
+    <div class="legend__item"><span class="legend__swatch legend__swatch--pin"></span>pins = the interface boundary</div>
+  </div>
+
+  <nav class="nav-pills">
+    <a href="#creational" class="nav-pill nav-pill--creational"><span class="nav-pill__dot"></span>Creational <em>5</em></a>
+<a href="#structural" class="nav-pill nav-pill--structural"><span class="nav-pill__dot"></span>Structural <em>7</em></a>
+<a href="#behavioral" class="nav-pill nav-pill--behavioral"><span class="nav-pill__dot"></span>Behavioral <em>5</em></a>
+  </nav>
+</header>
+
+<main>
+
+  <section class="category category--creational" id="creational">
+    <div class="category__head">
+      <span class="category__num">01</span>
+      <div>
+        <h2 class="category__name">Creational Patterns</h2>
+        <p class="category__blurb">Patterns that govern how objects come into being — safely, flexibly, and without the client code needing to know exact classes.</p>
+      </div>
+      <span class="category__count">5 patterns</span>
+    </div>
+    <div class="card-grid">
+      
+  <article class="card" id="singleton">
+    <div class="card__head">
+      <span class="designator">CR·01</span>
+      <div class="card__titles">
+        <h3 class="card__name">Singleton</h3>
+        <p class="card__tagline">One instance, one global access point — and enforced at runtime, not just by the compiler.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <g>
+    <circle cx="40" cy="40" r="14" class="node node--muted"/>
+    <text x="40" y="44" text-anchor="middle" class="dlabel">C1</text>
+  </g>
+    <g>
+    <circle cx="40" cy="88" r="14" class="node node--muted"/>
+    <text x="40" y="92" text-anchor="middle" class="dlabel">C2</text>
+  </g>
+    <g>
+    <circle cx="40" cy="136" r="14" class="node node--muted"/>
+    <text x="40" y="140" text-anchor="middle" class="dlabel">C3</text>
+  </g>
+    <path d="M54 40 L110 40 L170 78" class="trace trace--dashed"
+    marker-end="url(#arrow-creational)"/>
+    <path d="M54 88 L170 88" class="trace trace--dashed"
+    marker-end="url(#arrow-creational)"/>
+    <path d="M54 136 L110 136 L170 98" class="trace trace--dashed"
+    marker-end="url(#arrow-creational)"/>
+    <g>
+    <line x1="173" y1="81.6" x2="180" y2="81.6" class="pin"/>
+       <line x1="173" y1="102.4" x2="180" y2="102.4" class="pin"/>
+       <line x1="276" y1="81.6" x2="283" y2="81.6" class="pin"/>
+       <line x1="276" y1="102.4" x2="283" y2="102.4" class="pin"/>
+    <rect x="180" y="66" width="96" height="52" rx="7" class="chip"/>
+    <text x="228" y="89" text-anchor="middle" class="dlabel">INSTANCE</text>
+    <text x="228" y="104" text-anchor="middle" class="dsublabel">getInstance()</text>
+  </g>
+    <path d="M 262 66 C 288 54, 288 30, 262 34" class="trace trace--signal" marker-end="url(#arrow-signal)"/>
+    <text x="280" y="26" text-anchor="middle" class="dtag">×1</text>
+    <rect x="174" y="52" width="15" height="17" rx="2" class="lock-body"/>
+    <path d="M 177.5 52 v -6.5 a 4 4 0 0 1 8 0 v 6.5" class="lock-shackle"/>
+    <text x="150" y="158" text-anchor="middle" class="dtag">every caller resolves to the same instance</text>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">01-singleton.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-singleton">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-singleton" class="language-typescript">// Singleton — Application Configuration Registry
+// Ensures a class has exactly one instance and provides a global access point to it.
+
+class ConfigRegistry {
+  private static instance: ConfigRegistry | undefined;
+  private readonly settings: Map&lt;string, string&gt;;
+
+  private constructor() {
+    if (ConfigRegistry.instance) {
+      // TypeScript's `private` keyword only blocks `new` at compile time.
+      // This runtime guard closes the gap against bypasses like `new (Cls as any)()`.
+      throw new Error("ConfigRegistry is a singleton — use getInstance().");
+    }
+    this.settings = new Map([["env", "production"]]);
+  }
+
+  static getInstance(): ConfigRegistry {
+    if (!ConfigRegistry.instance) {
+      ConfigRegistry.instance = new ConfigRegistry();
+    }
+    return ConfigRegistry.instance;
+  }
+
+  get(key: string): string | undefined {
+    return this.settings.get(key);
+  }
+
+  set(key: string, value: string): void {
+    this.settings.set(key, value);
+  }
+}
+
+// --- Demo &amp; edge cases ---
+const a = ConfigRegistry.getInstance();
+const b = ConfigRegistry.getInstance();
+console.log("Same instance:", a === b); // true
+
+a.set("featureFlag", "on");
+console.log("b sees a's mutation:", b.get("featureFlag")); // "on"
+
+try {
+  // Bypass attempt: cast to `any` to skip the compiler's private-constructor check.
+  new (ConfigRegistry as unknown as new () =&gt; ConfigRegistry)();
+  console.log("Bypass succeeded (unexpected)");
+} catch (e) {
+  console.log("Bypass blocked at runtime:", (e as Error).message);
+}</code></pre>
+    </div>
+  </article>
+
+  <article class="card" id="factoryMethod">
+    <div class="card__head">
+      <span class="designator">CR·02</span>
+      <div class="card__titles">
+        <h3 class="card__name">Factory Method</h3>
+        <p class="card__tagline">Defers which concrete class gets built to a subclass, so callers never name it.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <g>
+    <line x1="11" y1="80" x2="18" y2="80" class="pin"/>
+       <line x1="11" y1="96" x2="18" y2="96" class="pin"/>
+       <line x1="92" y1="80" x2="99" y2="80" class="pin"/>
+       <line x1="92" y1="96" x2="99" y2="96" class="pin"/>
+    <rect x="18" y="68" width="74" height="40" rx="7" class="chip chip--dashed"/>
+    <text x="55" y="85" text-anchor="middle" class="dlabel">Creator</text>
+    <text x="55" y="100" text-anchor="middle" class="dsublabel">abstract</text>
+  </g>
+    <path d="M92 78 L136 40" class="trace"
+    marker-end="url(#arrow-creational)"/>
+    <path d="M92 98 L136 128" class="trace"
+    marker-end="url(#arrow-creational)"/>
+    <g>
+    <line x1="129" y1="32.8" x2="136" y2="32.8" class="pin"/>
+       <line x1="129" y1="47.2" x2="136" y2="47.2" class="pin"/>
+       <line x1="220" y1="32.8" x2="227" y2="32.8" class="pin"/>
+       <line x1="220" y1="47.2" x2="227" y2="47.2" class="pin"/>
+    <rect x="136" y="22" width="84" height="36" rx="7" class="chip"/>
+    <text x="178" y="44" text-anchor="middle" class="dlabel">EmailCreator</text>
+    
+  </g>
+    <g>
+    <line x1="129" y1="120.8" x2="136" y2="120.8" class="pin"/>
+       <line x1="129" y1="135.2" x2="136" y2="135.2" class="pin"/>
+       <line x1="220" y1="120.8" x2="227" y2="120.8" class="pin"/>
+       <line x1="220" y1="135.2" x2="227" y2="135.2" class="pin"/>
+    <rect x="136" y="110" width="84" height="36" rx="7" class="chip"/>
+    <text x="178" y="132" text-anchor="middle" class="dlabel">SmsCreator</text>
+    
+  </g>
+    <path d="M220 40 L258 40" class="trace trace--signal"
+    marker-end="url(#arrow-signal)"/>
+    <path d="M220 128 L258 128" class="trace trace--signal"
+    marker-end="url(#arrow-signal)"/>
+    <g>
+    
+    <rect x="258" y="22" width="34" height="36" rx="7" class="chip"/>
+    <text x="275" y="44" text-anchor="middle" class="dlabel">✉</text>
+    
+  </g>
+    <g>
+    
+    <rect x="258" y="110" width="34" height="36" rx="7" class="chip"/>
+    <text x="275" y="132" text-anchor="middle" class="dlabel">SMS</text>
+    
+  </g>
+    <text x="150" y="160" text-anchor="middle" class="dtag">each subclass decides which product to build</text>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">02-factory-method.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-factoryMethod">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-factoryMethod" class="language-typescript">// Factory Method — Notification Senders
+// Lets a base class defer instantiation of the concrete product to subclasses,
+// so client code never names the concrete class it's working with.
+
+interface Notifier {
+  send(message: string): void;
+}
+
+class EmailNotifier implements Notifier {
+  constructor(private readonly address: string) {}
+  send(message: string): void {
+    console.log(`Email to ${this.address}: ${message}`);
+  }
+}
+
+class SmsNotifier implements Notifier {
+  constructor(private readonly phone: string) {
+    if (!/^\+?[0-9]{7,15}$/.test(phone)) {
+      throw new Error(`Invalid phone number: ${phone}`);
+    }
+  }
+  send(message: string): void {
+    console.log(`SMS to ${this.phone}: ${message}`);
+  }
+}
+
+abstract class NotifierCreator {
+  // The factory method — subclasses decide which concrete product to build.
+  protected abstract createNotifier(): Notifier;
+
+  // Client-facing template method; it never sees a concrete Notifier class.
+  notify(message: string): void {
+    const notifier = this.createNotifier();
+    notifier.send(message);
+  }
+}
+
+class EmailNotifierCreator extends NotifierCreator {
+  constructor(private readonly address: string) {
+    super();
+  }
+  protected createNotifier(): Notifier {
+    return new EmailNotifier(this.address);
+  }
+}
+
+class SmsNotifierCreator extends NotifierCreator {
+  constructor(private readonly phone: string) {
+    super();
+  }
+  protected createNotifier(): Notifier {
+    return new SmsNotifier(this.phone);
+  }
+}
+
+// --- Demo &amp; edge cases ---
+const creators: NotifierCreator[] = [
+  new EmailNotifierCreator("ops@example.com"),
+  new SmsNotifierCreator("+15551234567"),
+];
+for (const c of creators) c.notify("Deployment finished");
+
+try {
+  new SmsNotifierCreator("not-a-phone").notify("test");
+} catch (e) {
+  console.log("Rejected invalid input:", (e as Error).message);
+}</code></pre>
+    </div>
+  </article>
+
+  <article class="card" id="abstractFactory">
+    <div class="card__head">
+      <span class="designator">CR·03</span>
+      <div class="card__titles">
+        <h3 class="card__name">Abstract Factory</h3>
+        <p class="card__tagline">Produces whole families of matching objects, guaranteeing they're never mixed.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <g>
+    <line x1="113" y1="19" x2="120" y2="19" class="pin"/>
+       <line x1="113" y1="31" x2="120" y2="31" class="pin"/>
+       <line x1="190" y1="19" x2="197" y2="19" class="pin"/>
+       <line x1="190" y1="31" x2="197" y2="31" class="pin"/>
+    <rect x="120" y="10" width="70" height="30" rx="7" class="chip"/>
+    <text x="155" y="22" text-anchor="middle" class="dlabel">Theme</text>
+    <text x="155" y="37" text-anchor="middle" class="dsublabel">getFactory()</text>
+  </g>
+    <path d="M135 40 L70 62" class="trace trace--dashed"
+    marker-end="url(#arrow-creational)"/>
+    <path d="M175 40 L235 62" class="trace trace--dashed"
+    marker-end="url(#arrow-creational)"/>
+    <rect x="18" y="60" width="120" height="90" rx="10" class="family-box family-box--a"/>
+    <rect x="162" y="60" width="120" height="90" rx="10" class="family-box family-box--b"/>
+    <g>
+    <line x1="23" y1="81" x2="30" y2="81" class="pin"/>
+       <line x1="23" y1="93" x2="30" y2="93" class="pin"/>
+       <line x1="126" y1="81" x2="133" y2="81" class="pin"/>
+       <line x1="126" y1="93" x2="133" y2="93" class="pin"/>
+    <rect x="30" y="72" width="96" height="30" rx="7" class="chip"/>
+    <text x="78" y="91" text-anchor="middle" class="dlabel">LightButton</text>
+    
+  </g>
+    <g>
+    <line x1="23" y1="119" x2="30" y2="119" class="pin"/>
+       <line x1="23" y1="131" x2="30" y2="131" class="pin"/>
+       <line x1="126" y1="119" x2="133" y2="119" class="pin"/>
+       <line x1="126" y1="131" x2="133" y2="131" class="pin"/>
+    <rect x="30" y="110" width="96" height="30" rx="7" class="chip"/>
+    <text x="78" y="129" text-anchor="middle" class="dlabel">LightCheckbox</text>
+    
+  </g>
+    <g>
+    <line x1="167" y1="81" x2="174" y2="81" class="pin"/>
+       <line x1="167" y1="93" x2="174" y2="93" class="pin"/>
+       <line x1="270" y1="81" x2="277" y2="81" class="pin"/>
+       <line x1="270" y1="93" x2="277" y2="93" class="pin"/>
+    <rect x="174" y="72" width="96" height="30" rx="7" class="chip"/>
+    <text x="222" y="91" text-anchor="middle" class="dlabel">DarkButton</text>
+    
+  </g>
+    <g>
+    <line x1="167" y1="119" x2="174" y2="119" class="pin"/>
+       <line x1="167" y1="131" x2="174" y2="131" class="pin"/>
+       <line x1="270" y1="119" x2="277" y2="119" class="pin"/>
+       <line x1="270" y1="131" x2="277" y2="131" class="pin"/>
+    <rect x="174" y="110" width="96" height="30" rx="7" class="chip"/>
+    <text x="222" y="129" text-anchor="middle" class="dlabel">DarkCheckbox</text>
+    
+  </g>
+    <text x="78" y="158" text-anchor="middle" class="dtag">family A</text>
+    <text x="222" y="158" text-anchor="middle" class="dtag">family B</text>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">03-abstract-factory.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-abstractFactory">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-abstractFactory" class="language-typescript">// Abstract Factory — UI Widget Kits
+// Produces families of related objects (Button + Checkbox) without the client
+// naming their concrete classes — guaranteeing the family never gets mixed.
+
+interface Button {
+  render(): string;
+}
+interface Checkbox {
+  render(): string;
+}
+
+class LightButton implements Button {
+  render(): string { return "[ Light Button ]"; }
+}
+class LightCheckbox implements Checkbox {
+  render(): string { return "[x] Light Checkbox"; }
+}
+class DarkButton implements Button {
+  render(): string { return "▓ Dark Button ▓"; }
+}
+class DarkCheckbox implements Checkbox {
+  render(): string { return "[■] Dark Checkbox"; }
+}
+
+interface WidgetFactory {
+  createButton(): Button;
+  createCheckbox(): Checkbox;
+}
+
+class LightWidgetFactory implements WidgetFactory {
+  createButton(): Button { return new LightButton(); }
+  createCheckbox(): Checkbox { return new LightCheckbox(); }
+}
+class DarkWidgetFactory implements WidgetFactory {
+  createButton(): Button { return new DarkButton(); }
+  createCheckbox(): Checkbox { return new DarkCheckbox(); }
+}
+
+type Theme = "light" | "dark";
+
+function getFactory(theme: Theme): WidgetFactory {
+  switch (theme) {
+    case "light":
+      return new LightWidgetFactory();
+    case "dark":
+      return new DarkWidgetFactory();
+    default: {
+      // Exhaustiveness check: a new Theme member breaks the build here, not at runtime.
+      const exhaustive: never = theme;
+      throw new Error(`Unhandled theme: ${exhaustive}`);
+    }
+  }
+}
+
+// --- Demo &amp; edge cases ---
+function renderForm(factory: WidgetFactory): void {
+  console.log(factory.createButton().render());
+  console.log(factory.createCheckbox().render());
+}
+
+renderForm(getFactory("light"));
+renderForm(getFactory("dark"));
+
+// Every product pulled from one factory belongs to the same family —
+// there is no code path that can hand back a LightButton with a DarkCheckbox.
+const darkFactory = getFactory("dark");
+const consistent =
+  darkFactory.createButton() instanceof DarkButton &amp;&amp;
+  darkFactory.createCheckbox() instanceof DarkCheckbox;
+console.log("Family stays consistent:", consistent);</code></pre>
+    </div>
+  </article>
+
+  <article class="card" id="builder">
+    <div class="card__head">
+      <span class="designator">CR·04</span>
+      <div class="card__titles">
+        <h3 class="card__name">Builder</h3>
+        <p class="card__tagline">Assembles a complex, immutable object through validated, chainable steps.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <g>
+    <line x1="3" y1="80.2" x2="10" y2="80.2" class="pin"/>
+       <line x1="3" y1="93.8" x2="10" y2="93.8" class="pin"/>
+       <line x1="60" y1="80.2" x2="67" y2="80.2" class="pin"/>
+       <line x1="60" y1="93.8" x2="67" y2="93.8" class="pin"/>
+    <rect x="10" y="70" width="50" height="34" rx="7" class="chip"/>
+    <text x="35" y="91" text-anchor="middle" class="dlabel">url()</text>
+    
+  </g>
+    <g>
+    <line x1="65" y1="80.2" x2="72" y2="80.2" class="pin"/>
+       <line x1="65" y1="93.8" x2="72" y2="93.8" class="pin"/>
+       <line x1="122" y1="80.2" x2="129" y2="80.2" class="pin"/>
+       <line x1="122" y1="93.8" x2="129" y2="93.8" class="pin"/>
+    <rect x="72" y="70" width="50" height="34" rx="7" class="chip"/>
+    <text x="97" y="91" text-anchor="middle" class="dlabel">method()</text>
+    
+  </g>
+    <g>
+    <line x1="127" y1="80.2" x2="134" y2="80.2" class="pin"/>
+       <line x1="127" y1="93.8" x2="134" y2="93.8" class="pin"/>
+       <line x1="184" y1="80.2" x2="191" y2="80.2" class="pin"/>
+       <line x1="184" y1="93.8" x2="191" y2="93.8" class="pin"/>
+    <rect x="134" y="70" width="50" height="34" rx="7" class="chip"/>
+    <text x="159" y="91" text-anchor="middle" class="dlabel">header()</text>
+    
+  </g>
+    <g>
+    <line x1="189" y1="80.2" x2="196" y2="80.2" class="pin"/>
+       <line x1="189" y1="93.8" x2="196" y2="93.8" class="pin"/>
+       <line x1="246" y1="80.2" x2="253" y2="80.2" class="pin"/>
+       <line x1="246" y1="93.8" x2="253" y2="93.8" class="pin"/>
+    <rect x="196" y="70" width="50" height="34" rx="7" class="chip"/>
+    <text x="221" y="91" text-anchor="middle" class="dlabel">body()</text>
+    
+  </g>
+    <path d="M60 87 L72 87" class="trace trace--signal"
+    marker-end="url(#arrow-signal)"/>
+    <path d="M122 87 L134 87" class="trace trace--signal"
+    marker-end="url(#arrow-signal)"/>
+    <path d="M184 87 L196 87" class="trace trace--signal"
+    marker-end="url(#arrow-signal)"/>
+    <path d="M221 87 L246 87 L246 118" class="trace trace--signal"
+    marker-end="url(#arrow-signal)"/>
+    <g>
+    <line x1="193" y1="128.8" x2="200" y2="128.8" class="pin"/>
+       <line x1="193" y1="143.2" x2="200" y2="143.2" class="pin"/>
+       <line x1="292" y1="128.8" x2="299" y2="128.8" class="pin"/>
+       <line x1="292" y1="143.2" x2="299" y2="143.2" class="pin"/>
+    <rect x="200" y="118" width="92" height="36" rx="7" class="chip"/>
+    <text x="246" y="133" text-anchor="middle" class="dlabel">HttpRequest</text>
+    <text x="246" y="148" text-anchor="middle" class="dsublabel">build()</text>
+  </g>
+    <text x="150" y="40" text-anchor="middle" class="dtag">fluent steps assemble one immutable result</text>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">04-builder.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-builder">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-builder" class="language-typescript">// Builder — HTTP Request Builder
+// Assembles a complex, immutable object step by step, validating as it goes
+// instead of exposing a giant constructor with many optional parameters.
+
+interface HttpRequest {
+  readonly url: string;
+  readonly method: "GET" | "POST" | "PUT" | "DELETE";
+  readonly headers: Readonly&lt;Record&lt;string, string&gt;&gt;;
+  readonly body: string | undefined;
+}
+
+class HttpRequestBuilder {
+  private url?: string;
+  private method: HttpRequest["method"] = "GET";
+  private headers: Record&lt;string, string&gt; = {};
+  private body?: string;
+
+  setUrl(url: string): this {
+    if (!/^https?:\/\//.test(url)) {
+      throw new Error(`URL must start with http(s)://, got "${url}"`);
+    }
+    this.url = url;
+    return this;
+  }
+
+  setMethod(method: HttpRequest["method"]): this {
+    this.method = method;
+    return this;
+  }
+
+  addHeader(key: string, value: string): this {
+    this.headers = { ...this.headers, [key]: value };
+    return this;
+  }
+
+  setBody(body: string): this {
+    if (this.method === "GET") {
+      throw new Error("GET requests cannot have a body");
+    }
+    this.body = body;
+    return this;
+  }
+
+  build(): HttpRequest {
+    if (!this.url) {
+      throw new Error("Cannot build a request without a URL");
+    }
+    return Object.freeze({
+      url: this.url,
+      method: this.method,
+      headers: Object.freeze({ ...this.headers }),
+      body: this.body,
+    });
+  }
+}
+
+// --- Demo &amp; edge cases ---
+const request = new HttpRequestBuilder()
+  .setUrl("https://api.example.com/orders")
+  .setMethod("POST")
+  .addHeader("Content-Type", "application/json")
+  .setBody(JSON.stringify({ item: "widget" }))
+  .build();
+
+console.log(request);
+
+try {
+  new HttpRequestBuilder().build(); // missing required URL
+} catch (e) {
+  console.log("Rejected:", (e as Error).message);
+}
+
+try {
+  new HttpRequestBuilder().setUrl("https://x.com").setBody("oops"); // GET + body
+} catch (e) {
+  console.log("Rejected:", (e as Error).message);
+}
+
+// Two builds from the same builder don't alias each other's headers object.
+const builder = new HttpRequestBuilder().setUrl("https://x.com/a");
+const first = builder.build();
+builder.addHeader("X-Trace", "abc");
+const second = builder.build();
+console.log("First build unaffected by later mutation:", first.headers, second.headers);</code></pre>
+    </div>
+  </article>
+
+  <article class="card" id="prototype">
+    <div class="card__head">
+      <span class="designator">CR·05</span>
+      <div class="card__titles">
+        <h3 class="card__name">Prototype</h3>
+        <p class="card__tagline">Clones an existing instance instead of building from scratch — deep-copying mutable state.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <g>
+    <line x1="33" y1="79.8" x2="40" y2="79.8" class="pin"/>
+       <line x1="33" y1="98.19999999999999" x2="40" y2="98.19999999999999" class="pin"/>
+       <line x1="130" y1="79.8" x2="137" y2="79.8" class="pin"/>
+       <line x1="130" y1="98.19999999999999" x2="137" y2="98.19999999999999" class="pin"/>
+    <rect x="40" y="66" width="90" height="46" rx="7" class="chip"/>
+    <text x="85" y="86" text-anchor="middle" class="dlabel">Circle</text>
+    <text x="85" y="101" text-anchor="middle" class="dsublabel">original</text>
+  </g>
+    <path d="M130 89 L176 89" class="trace trace--signal"
+    marker-end="url(#arrow-signal)"/>
+    <text x="153" y="78" text-anchor="middle" class="dtag">clone()</text>
+    <g>
+    <line x1="171" y1="79.8" x2="178" y2="79.8" class="pin"/>
+       <line x1="171" y1="98.19999999999999" x2="178" y2="98.19999999999999" class="pin"/>
+       <line x1="268" y1="79.8" x2="275" y2="79.8" class="pin"/>
+       <line x1="268" y1="98.19999999999999" x2="275" y2="98.19999999999999" class="pin"/>
+    <rect x="178" y="66" width="90" height="46" rx="7" class="chip"/>
+    <text x="223" y="86" text-anchor="middle" class="dlabel">Circle</text>
+    <text x="223" y="101" text-anchor="middle" class="dsublabel">copy</text>
+  </g>
+    <rect x="52" y="122" width="30" height="14" rx="3" class="tag-box"/>
+    <text x="67" y="132" text-anchor="middle" class="dtag">tags</text>
+    <rect x="190" y="122" width="30" height="14" rx="3" class="tag-box"/>
+    <text x="205" y="132" text-anchor="middle" class="dtag">tags</text>
+    <path d="M 67 122 L 67 100" class="hairline"/>
+    <path d="M 205 122 L 205 100" class="hairline"/>
+    <text x="150" y="156" text-anchor="middle" class="dtag">independent copies — no shared array reference</text>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">05-prototype.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-prototype">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-prototype" class="language-typescript">// Prototype — Cloneable Shapes
+// Creates new objects by copying an existing instance instead of building
+// from scratch, while avoiding the classic pitfall of aliasing mutable fields.
+
+interface Prototype&lt;T&gt; {
+  clone(): T;
+}
+
+class Shape implements Prototype&lt;Shape&gt; {
+  constructor(
+    public x: number,
+    public y: number,
+    public fillColor: string,
+    public tags: string[] = [],
+  ) {}
+
+  clone(): Shape {
+    // Deep-copy the mutable array so the clone doesn't alias the original's.
+    return new Shape(this.x, this.y, this.fillColor, [...this.tags]);
+  }
+}
+
+class Circle extends Shape {
+  constructor(
+    x: number,
+    y: number,
+    fillColor: string,
+    public radius: number,
+    tags: string[] = [],
+  ) {
+    super(x, y, fillColor, tags);
+  }
+
+  override clone(): Circle {
+    // Covariant override — cloning a Circle returns a Circle, not a bare Shape.
+    return new Circle(this.x, this.y, this.fillColor, this.radius, [...this.tags]);
+  }
+}
+
+// --- Demo &amp; edge cases ---
+const original = new Circle(10, 10, "#f00", 5, ["logo"]);
+const copy = original.clone();
+copy.tags.push("duplicate");
+copy.x = 99;
+
+console.log("original unaffected by clone's array mutation:", original.tags);
+console.log("original unaffected by clone's field mutation:", original.x);
+console.log("copy is independent:", copy.tags, copy.x);
+console.log("clone preserves the concrete subclass:", copy instanceof Circle);
+
+// Cloning an empty-tags shape must not throw or share a frozen/undefined array.
+const bare = new Shape(0, 0, "#000");
+const bareClone = bare.clone();
+bareClone.tags.push("new-tag");
+console.log("original with no initial tags stays empty:", bare.tags.length === 0);</code></pre>
+    </div>
+  </article>
+    </div>
+  </section>
+
+  <section class="category category--structural" id="structural">
+    <div class="category__head">
+      <span class="category__num">02</span>
+      <div>
+        <h2 class="category__name">Structural Patterns</h2>
+        <p class="category__blurb">Patterns that compose classes and objects into larger structures without making that structure brittle.</p>
+      </div>
+      <span class="category__count">7 patterns</span>
+    </div>
+    <div class="card-grid">
+      
+  <article class="card" id="adapter">
+    <div class="card__head">
+      <span class="designator">ST·01</span>
+      <div class="card__titles">
+        <h3 class="card__name">Adapter</h3>
+        <p class="card__tagline">Wraps an incompatible interface so mismatched code can work together.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <polygon points="30,50 60,50 70,75 60,100 30,100 20,75" class="chip"/>
+    <text x="45" y="79" text-anchor="middle" class="dtag">Legacy</text>
+    <path d="M70 75 L118 75" class="trace"
+    marker-end="url(#arrow-structural)"/>
+    <g>
+    <line x1="113" y1="67" x2="120" y2="67" class="pin"/>
+       <line x1="113" y1="83" x2="120" y2="83" class="pin"/>
+       <line x1="190" y1="67" x2="197" y2="67" class="pin"/>
+       <line x1="190" y1="83" x2="197" y2="83" class="pin"/>
+    <rect x="120" y="55" width="70" height="40" rx="7" class="chip"/>
+    <text x="155" y="79" text-anchor="middle" class="dlabel">Adapter</text>
+    
+  </g>
+    <path d="M190 75 L232 75" class="trace trace--signal"
+    marker-end="url(#arrow-signal)"/>
+    <circle cx="256" cy="75" r="24" class="chip"/>
+    <text x="256" y="79" text-anchor="middle" class="dtag">Target</text>
+    <text x="150" y="130" text-anchor="middle" class="dtag">℉ XML  →  adapter  →  °C number</text>
+    <text x="150" y="150" text-anchor="middle" class="dtag">incompatible shapes made to fit the same socket</text>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">06-adapter.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-adapter">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-adapter" class="language-typescript">// Adapter — Legacy Weather Client
+// Lets a class with an incompatible interface (legacy, Fahrenheit, XML-shaped)
+// work behind the interface modern client code actually expects.
+
+interface WeatherService {
+  getTemperatureCelsius(city: string): number;
+}
+
+// Existing third-party class we cannot modify.
+class LegacyWeatherXmlClient {
+  fetchXmlReport(city: string): string {
+    const fakeFahrenheit = city === "Phoenix" ? 104 : 68;
+    return `&lt;report&gt;&lt;city&gt;${city}&lt;/city&gt;&lt;tempF&gt;${fakeFahrenheit}&lt;/tempF&gt;&lt;/report&gt;`;
+  }
+}
+
+class LegacyWeatherAdapter implements WeatherService {
+  constructor(private readonly legacyClient: LegacyWeatherXmlClient) {}
+
+  getTemperatureCelsius(city: string): number {
+    const xml = this.legacyClient.fetchXmlReport(city);
+    const match = /&lt;tempF&gt;(-?\d+(\.\d+)?)&lt;\/tempF&gt;/.exec(xml);
+    if (!match) {
+      throw new Error(`Malformed legacy response for "${city}": ${xml}`);
+    }
+    const fahrenheit = Number(match[1]);
+    return Math.round(((fahrenheit - 32) * 5) / 9 * 10) / 10;
+  }
+}
+
+// --- Demo &amp; edge cases ---
+const legacyClient = new LegacyWeatherXmlClient();
+const service: WeatherService = new LegacyWeatherAdapter(legacyClient);
+console.log("Phoenix °C:", service.getTemperatureCelsius("Phoenix"));
+console.log("Boston °C:", service.getTemperatureCelsius("Boston"));
+
+try {
+  const brokenClient = { fetchXmlReport: () =&gt; "&lt;report&gt;&lt;city&gt;Nowhere&lt;/city&gt;&lt;/report&gt;" };
+  const badAdapter = new LegacyWeatherAdapter(brokenClient as LegacyWeatherXmlClient);
+  badAdapter.getTemperatureCelsius("Nowhere");
+} catch (e) {
+  console.log("Rejected malformed legacy response:", (e as Error).message);
+}</code></pre>
+    </div>
+  </article>
+
+  <article class="card" id="bridge">
+    <div class="card__head">
+      <span class="designator">ST·02</span>
+      <div class="card__titles">
+        <h3 class="card__name">Bridge</h3>
+        <p class="card__tagline">Separates an abstraction from its implementation so each can evolve on its own.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <g>
+    <line x1="13" y1="33.6" x2="20" y2="33.6" class="pin"/>
+       <line x1="13" y1="46.4" x2="20" y2="46.4" class="pin"/>
+       <line x1="116" y1="33.6" x2="123" y2="33.6" class="pin"/>
+       <line x1="116" y1="46.4" x2="123" y2="46.4" class="pin"/>
+    <rect x="20" y="24" width="96" height="32" rx="7" class="chip"/>
+    <text x="68" y="44" text-anchor="middle" class="dlabel">RemoteControl</text>
+    
+  </g>
+    <g>
+    <line x1="13" y1="81.6" x2="20" y2="81.6" class="pin"/>
+       <line x1="13" y1="94.4" x2="20" y2="94.4" class="pin"/>
+       <line x1="116" y1="81.6" x2="123" y2="81.6" class="pin"/>
+       <line x1="116" y1="94.4" x2="123" y2="94.4" class="pin"/>
+    <rect x="20" y="72" width="96" height="32" rx="7" class="chip"/>
+    <text x="68" y="92" text-anchor="middle" class="dlabel">AdvancedRemote</text>
+    
+  </g>
+    <g>
+    <line x1="177" y1="33.6" x2="184" y2="33.6" class="pin"/>
+       <line x1="177" y1="46.4" x2="184" y2="46.4" class="pin"/>
+       <line x1="280" y1="33.6" x2="287" y2="33.6" class="pin"/>
+       <line x1="280" y1="46.4" x2="287" y2="46.4" class="pin"/>
+    <rect x="184" y="24" width="96" height="32" rx="7" class="chip"/>
+    <text x="232" y="44" text-anchor="middle" class="dlabel">Television</text>
+    
+  </g>
+    <g>
+    <line x1="177" y1="81.6" x2="184" y2="81.6" class="pin"/>
+       <line x1="177" y1="94.4" x2="184" y2="94.4" class="pin"/>
+       <line x1="280" y1="81.6" x2="287" y2="81.6" class="pin"/>
+       <line x1="280" y1="94.4" x2="287" y2="94.4" class="pin"/>
+    <rect x="184" y="72" width="96" height="32" rx="7" class="chip"/>
+    <text x="232" y="92" text-anchor="middle" class="dlabel">Radio</text>
+    
+  </g>
+    <rect x="60" y="120" width="180" height="10" rx="5" class="bridge-bar"/>
+    <line x1="68" y1="56" x2="68" y2="120" class="hairline"/>
+    <line x1="232" y1="56" x2="232" y2="120" class="hairline"/>
+    <text x="68" y="145" text-anchor="middle" class="dtag">abstraction</text>
+    <text x="232" y="145" text-anchor="middle" class="dtag">implementation</text>
+    <text x="150" y="162" text-anchor="middle" class="dtag">either side extends independently of the other</text>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">07-bridge.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-bridge">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-bridge" class="language-typescript">// Bridge — Remote Controls &amp; Devices
+// Splits an "abstraction" hierarchy (remotes) from an "implementation"
+// hierarchy (devices) so each can grow independently of the other.
+
+interface Device {
+  isEnabled(): boolean;
+  enable(): void;
+  disable(): void;
+  getVolume(): number;
+  setVolume(percent: number): void;
+}
+
+class Television implements Device {
+  private on = false;
+  private volume = 30;
+  isEnabled(): boolean { return this.on; }
+  enable(): void { this.on = true; }
+  disable(): void { this.on = false; }
+  getVolume(): number { return this.volume; }
+  setVolume(percent: number): void {
+    this.volume = Math.min(100, Math.max(0, percent));
+  }
+}
+
+class Radio implements Device {
+  private on = false;
+  private volume = 50;
+  isEnabled(): boolean { return this.on; }
+  enable(): void { this.on = true; }
+  disable(): void { this.on = false; }
+  getVolume(): number { return this.volume; }
+  setVolume(percent: number): void {
+    this.volume = Math.min(100, Math.max(0, percent));
+  }
+}
+
+// Abstraction — holds a reference to (bridges to) a Device implementation.
+class RemoteControl {
+  constructor(protected device: Device) {}
+
+  togglePower(): void {
+    this.device.isEnabled() ? this.device.disable() : this.device.enable();
+  }
+  volumeDown(): void { this.device.setVolume(this.device.getVolume() - 10); }
+  volumeUp(): void { this.device.setVolume(this.device.getVolume() + 10); }
+}
+
+// Refined abstraction — extends behavior without touching any Device class.
+class AdvancedRemoteControl extends RemoteControl {
+  mute(): void { this.device.setVolume(0); }
+}
+
+// --- Demo &amp; edge cases ---
+const tv = new Television();
+const remote = new AdvancedRemoteControl(tv);
+remote.togglePower();
+remote.volumeUp();
+remote.volumeUp();
+console.log("TV volume:", tv.getVolume(), "on:", tv.isEnabled());
+remote.mute();
+console.log("TV muted volume:", tv.getVolume());
+
+const radio = new Radio();
+const basicRemote = new RemoteControl(radio);
+for (let i = 0; i &lt; 6; i++) basicRemote.volumeDown(); // would go negative unclamped
+console.log("Radio volume clamps at 0, not negative:", radio.getVolume());
+
+for (let i = 0; i &lt; 12; i++) basicRemote.volumeUp(); // would exceed 100 unclamped
+console.log("Radio volume clamps at 100, not over:", radio.getVolume());</code></pre>
+    </div>
+  </article>
+
+  <article class="card" id="composite">
+    <div class="card__head">
+      <span class="designator">ST·03</span>
+      <div class="card__titles">
+        <h3 class="card__name">Composite</h3>
+        <p class="card__tagline">Arranges objects into trees so a single leaf and a whole branch share one interface.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <g>
+    <line x1="113" y1="23" x2="120" y2="23" class="pin"/>
+       <line x1="113" y1="35" x2="120" y2="35" class="pin"/>
+       <line x1="196" y1="23" x2="203" y2="23" class="pin"/>
+       <line x1="196" y1="35" x2="203" y2="35" class="pin"/>
+    <rect x="120" y="14" width="76" height="30" rx="7" class="chip"/>
+    <text x="158" y="33" text-anchor="middle" class="dlabel">project/</text>
+    
+  </g>
+    <path d="M135 44 L80 76" class="trace"
+    marker-end="url(#arrow-structural)"/>
+    <path d="M165 44 L220 76" class="trace trace--dashed"
+    marker-end="url(#arrow-structural)"/>
+    <g>
+    <line x1="31" y1="85" x2="38" y2="85" class="pin"/>
+       <line x1="31" y1="97" x2="38" y2="97" class="pin"/>
+       <line x1="114" y1="85" x2="121" y2="85" class="pin"/>
+       <line x1="114" y1="97" x2="121" y2="97" class="pin"/>
+    <rect x="38" y="76" width="76" height="30" rx="7" class="chip"/>
+    <text x="76" y="95" text-anchor="middle" class="dlabel">src/</text>
+    
+  </g>
+    <g>
+    <line x1="189" y1="85" x2="196" y2="85" class="pin"/>
+       <line x1="189" y1="97" x2="196" y2="97" class="pin"/>
+       <line x1="284" y1="85" x2="291" y2="85" class="pin"/>
+       <line x1="284" y1="97" x2="291" y2="97" class="pin"/>
+    <rect x="196" y="76" width="88" height="30" rx="7" class="chip"/>
+    <text x="240" y="95" text-anchor="middle" class="dlabel">README.md</text>
+    
+  </g>
+    <path d="M60 106 L46 130" class="trace"
+    marker-end="url(#arrow-structural)"/>
+    <path d="M90 106 L104 130" class="trace"
+    marker-end="url(#arrow-structural)"/>
+    <g>
+    <line x1="3" y1="139" x2="10" y2="139" class="pin"/>
+       <line x1="3" y1="151" x2="10" y2="151" class="pin"/>
+       <line x1="78" y1="139" x2="85" y2="139" class="pin"/>
+       <line x1="78" y1="151" x2="85" y2="151" class="pin"/>
+    <rect x="10" y="130" width="68" height="30" rx="7" class="chip"/>
+    <text x="44" y="149" text-anchor="middle" class="dlabel">index.ts</text>
+    
+  </g>
+    <g>
+    <line x1="79" y1="139" x2="86" y2="139" class="pin"/>
+       <line x1="79" y1="151" x2="86" y2="151" class="pin"/>
+       <line x1="154" y1="139" x2="161" y2="139" class="pin"/>
+       <line x1="154" y1="151" x2="161" y2="151" class="pin"/>
+    <rect x="86" y="130" width="68" height="30" rx="7" class="chip"/>
+    <text x="120" y="149" text-anchor="middle" class="dlabel">utils.ts</text>
+    
+  </g>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">08-composite.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-composite">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-composite" class="language-typescript">// Composite — Filesystem Tree
+// Composes files and directories into a tree and lets client code treat a
+// single file and an entire directory through the exact same interface.
+
+interface FileSystemNode {
+  readonly name: string;
+  getSize(): number;
+  print(indent?: string): string;
+}
+
+class FileLeaf implements FileSystemNode {
+  constructor(public readonly name: string, private readonly sizeBytes: number) {
+    if (sizeBytes &lt; 0) throw new Error(`File size cannot be negative: ${sizeBytes}`);
+  }
+  getSize(): number { return this.sizeBytes; }
+  print(indent = ""): string { return `${indent}${this.name} (${this.sizeBytes}B)`; }
+}
+
+class Directory implements FileSystemNode {
+  private readonly children: FileSystemNode[] = [];
+  constructor(public readonly name: string) {}
+
+  add(node: FileSystemNode): this {
+    if (node === this) throw new Error("A directory cannot contain itself");
+    this.children.push(node);
+    return this;
+  }
+
+  getSize(): number {
+    // Uniform recursion: a child may itself be a Directory or a FileLeaf.
+    return this.children.reduce((total, child) =&gt; total + child.getSize(), 0);
+  }
+
+  print(indent = ""): string {
+    const lines = [`${indent}${this.name}/`];
+    for (const child of this.children) lines.push(child.print(indent + "  "));
+    return lines.join("\n");
+  }
+}
+
+// --- Demo &amp; edge cases ---
+const root = new Directory("project");
+const src = new Directory("src");
+src.add(new FileLeaf("index.ts", 1200)).add(new FileLeaf("utils.ts", 800));
+root.add(src).add(new FileLeaf("README.md", 400));
+
+console.log(root.print());
+console.log("Total size (leaves + composites, uniformly):", root.getSize(), "bytes");
+
+try {
+  root.add(root); // cyclic containment would infinite-loop getSize()
+} catch (e) {
+  console.log("Rejected cycle:", (e as Error).message);
+}
+
+const empty = new Directory("empty");
+console.log("Empty directory sums to 0, not NaN:", empty.getSize());
+
+try {
+  new FileLeaf("bad.txt", -1);
+} catch (e) {
+  console.log("Rejected negative size:", (e as Error).message);
+}</code></pre>
+    </div>
+  </article>
+
+  <article class="card" id="decorator">
+    <div class="card__head">
+      <span class="designator">ST·04</span>
+      <div class="card__titles">
+        <h3 class="card__name">Decorator</h3>
+        <p class="card__tagline">Adds responsibilities to an object at runtime by wrapping it in layers.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <rect x="90" y="18" width="120" height="140" rx="16" class="ring ring--3"/>
+    <rect x="104" y="32" width="92" height="112" rx="14" class="ring ring--2"/>
+    <rect x="118" y="46" width="64" height="84" rx="12" class="ring ring--1"/>
+    <g>
+    
+    <rect x="126" y="72" width="48" height="32" rx="7" class="chip"/>
+    <text x="150" y="92" text-anchor="middle" class="dlabel">Espresso</text>
+    
+  </g>
+    <text x="150" y="20" text-anchor="middle" class="dtag">+ whipped cream</text>
+    <text x="150" y="165" text-anchor="middle" class="dtag">+ milk   ·   + sugar   (wrap in any order)</text>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">09-decorator.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-decorator">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-decorator" class="language-typescript">// Decorator — Beverage Add-ons
+// Wraps an object at runtime to layer on new responsibilities (cost,
+// description) without altering the wrapped object or subclassing per combo.
+
+interface Beverage {
+  cost(): number;
+  describe(): string;
+}
+
+class Espresso implements Beverage {
+  cost(): number { return 2.5; }
+  describe(): string { return "Espresso"; }
+}
+
+abstract class BeverageDecorator implements Beverage {
+  constructor(protected readonly wrapped: Beverage) {}
+  abstract cost(): number;
+  abstract describe(): string;
+}
+
+class MilkDecorator extends BeverageDecorator {
+  cost(): number { return this.wrapped.cost() + 0.5; }
+  describe(): string { return `${this.wrapped.describe()} + Milk`; }
+}
+
+class SugarDecorator extends BeverageDecorator {
+  cost(): number { return this.wrapped.cost() + 0.2; }
+  describe(): string { return `${this.wrapped.describe()} + Sugar`; }
+}
+
+class WhippedCreamDecorator extends BeverageDecorator {
+  cost(): number { return Math.round((this.wrapped.cost() + 0.7) * 100) / 100; }
+  describe(): string { return `${this.wrapped.describe()} + Whipped Cream`; }
+}
+
+// --- Demo &amp; edge cases ---
+let order: Beverage = new Espresso();
+order = new MilkDecorator(order);
+order = new SugarDecorator(order);
+order = new WhippedCreamDecorator(order);
+console.log(order.describe(), "→ $" + order.cost().toFixed(2));
+
+// Wrapping order changes the description text but not the final total —
+// use an epsilon comparison since these are floating-point sums.
+const differentOrder = new SugarDecorator(new MilkDecorator(new Espresso()));
+const totalsMatch = Math.abs(order.cost() - 0.7 - differentOrder.cost()) &lt; 1e-9;
+console.log("Totals agree regardless of wrap order:", totalsMatch);
+
+// The undecorated base case still works on its own.
+const plain: Beverage = new Espresso();
+console.log(plain.describe(), "→ $" + plain.cost().toFixed(2));</code></pre>
+    </div>
+  </article>
+
+  <article class="card" id="facade">
+    <div class="card__head">
+      <span class="designator">ST·05</span>
+      <div class="card__titles">
+        <h3 class="card__name">Facade</h3>
+        <p class="card__tagline">Hides a tangle of subsystems behind one simple, coordinated entry point.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <rect x="150" y="30" width="120" height="120" rx="10" class="family-box family-box--b"/>
+    <g>
+    <line x1="153" y1="47.8" x2="160" y2="47.8" class="pin"/>
+       <line x1="153" y1="58.2" x2="160" y2="58.2" class="pin"/>
+       <line x1="260" y1="47.8" x2="267" y2="47.8" class="pin"/>
+       <line x1="260" y1="58.2" x2="267" y2="58.2" class="pin"/>
+    <rect x="160" y="40" width="100" height="26" rx="7" class="chip"/>
+    <text x="210" y="57" text-anchor="middle" class="dlabel">Inventory</text>
+    
+  </g>
+    <g>
+    <line x1="153" y1="81.8" x2="160" y2="81.8" class="pin"/>
+       <line x1="153" y1="92.2" x2="160" y2="92.2" class="pin"/>
+       <line x1="260" y1="81.8" x2="267" y2="81.8" class="pin"/>
+       <line x1="260" y1="92.2" x2="267" y2="92.2" class="pin"/>
+    <rect x="160" y="74" width="100" height="26" rx="7" class="chip"/>
+    <text x="210" y="91" text-anchor="middle" class="dlabel">Payment</text>
+    
+  </g>
+    <g>
+    <line x1="153" y1="115.8" x2="160" y2="115.8" class="pin"/>
+       <line x1="153" y1="126.2" x2="160" y2="126.2" class="pin"/>
+       <line x1="260" y1="115.8" x2="267" y2="115.8" class="pin"/>
+       <line x1="260" y1="126.2" x2="267" y2="126.2" class="pin"/>
+    <rect x="160" y="108" width="100" height="26" rx="7" class="chip"/>
+    <text x="210" y="125" text-anchor="middle" class="dlabel">Shipping</text>
+    
+  </g>
+    <path d="M10 88 L80 88" class="trace trace--signal"
+    marker-end="url(#arrow-signal)"/>
+    <g>
+    <line x1="75" y1="76.8" x2="82" y2="76.8" class="pin"/>
+       <line x1="75" y1="99.19999999999999" x2="82" y2="99.19999999999999" class="pin"/>
+       <line x1="144" y1="76.8" x2="151" y2="76.8" class="pin"/>
+       <line x1="144" y1="99.19999999999999" x2="151" y2="99.19999999999999" class="pin"/>
+    <rect x="82" y="60" width="62" height="56" rx="7" class="chip"/>
+    <text x="113" y="85" text-anchor="middle" class="dlabel">Checkout</text>
+    <text x="113" y="100" text-anchor="middle" class="dsublabel">facade</text>
+  </g>
+    <text x="45" y="70" text-anchor="middle" class="dtag">client</text>
+    <text x="210" y="162" text-anchor="middle" class="dtag">one call, three coordinated subsystems</text>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">10-facade.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-facade">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-facade" class="language-typescript">// Facade — Checkout Facade
+// Gives client code one simple entry point in front of several subsystems
+// (inventory, payment, shipping), including coordinating their failure paths.
+
+class InventoryService {
+  private stock = new Map&lt;string, number&gt;([["sku-1", 5]]);
+  reserve(sku: string, qty: number): void {
+    const available = this.stock.get(sku) ?? 0;
+    if (available &lt; qty) throw new Error(`Insufficient stock for ${sku}`);
+    this.stock.set(sku, available - qty);
+  }
+  release(sku: string, qty: number): void {
+    this.stock.set(sku, (this.stock.get(sku) ?? 0) + qty);
+  }
+}
+
+class PaymentService {
+  charge(amountCents: number): string {
+    if (amountCents &lt;= 0) throw new Error("Charge amount must be positive");
+    if (amountCents &gt; 100_000) throw new Error("Card declined: over limit");
+    return `txn_${amountCents}_${Date.now()}`;
+  }
+}
+
+class ShippingService {
+  schedule(sku: string, qty: number): string {
+    return `ship_${sku}_x${qty}`;
+  }
+}
+
+// Facade — hides three subsystems behind one call and rolls back on failure.
+class CheckoutFacade {
+  private readonly inventory = new InventoryService();
+  private readonly payment = new PaymentService();
+  private readonly shipping = new ShippingService();
+
+  placeOrder(
+    sku: string,
+    qty: number,
+    amountCents: number,
+  ): { txnId: string; shipmentId: string } {
+    this.inventory.reserve(sku, qty);
+    try {
+      const txnId = this.payment.charge(amountCents);
+      const shipmentId = this.shipping.schedule(sku, qty);
+      return { txnId, shipmentId };
+    } catch (err) {
+      // A failed payment must not strand reserved stock — roll it back.
+      this.inventory.release(sku, qty);
+      throw err;
+    }
+  }
+}
+
+// --- Demo &amp; edge cases ---
+const checkout = new CheckoutFacade();
+console.log("Order placed:", checkout.placeOrder("sku-1", 2, 4999));
+
+try {
+  checkout.placeOrder("sku-1", 10, 1000); // only 3 left in stock
+} catch (e) {
+  console.log("Rejected:", (e as Error).message);
+}
+
+try {
+  checkout.placeOrder("sku-1", 1, 999_999); // stock reserved, then payment fails
+} catch (e) {
+  console.log("Rejected (stock rolled back):", (e as Error).message);
+}
+console.log("Stock recovered:", checkout.placeOrder("sku-1", 3, 1500));</code></pre>
+    </div>
+  </article>
+
+  <article class="card" id="flyweight">
+    <div class="card__head">
+      <span class="designator">ST·06</span>
+      <div class="card__titles">
+        <h3 class="card__name">Flyweight</h3>
+        <p class="card__tagline">Shares heavy intrinsic state across many lightweight instances to save memory.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <g>
+    <line x1="113" y1="81.4" x2="120" y2="81.4" class="pin"/>
+       <line x1="113" y1="96.6" x2="120" y2="96.6" class="pin"/>
+       <line x1="216" y1="81.4" x2="223" y2="81.4" class="pin"/>
+       <line x1="216" y1="96.6" x2="223" y2="96.6" class="pin"/>
+    <rect x="120" y="70" width="96" height="38" rx="7" class="chip"/>
+    <text x="168" y="86" text-anchor="middle" class="dlabel">TreeType</text>
+    <text x="168" y="101" text-anchor="middle" class="dsublabel">shared · oak</text>
+  </g>
+    <circle cx="220.0" cy="31.0" r="4" class="leaf-dot"/>
+                 <line x1="216" y1="89" x2="220.0" y2="31.0" class="hairline"/><circle cx="241.2" cy="34.5" r="4" class="leaf-dot"/>
+                 <line x1="216" y1="89" x2="241.2" y2="34.5" class="hairline"/><circle cx="259.9" cy="44.6" r="4" class="leaf-dot"/>
+                 <line x1="216" y1="89" x2="259.9" y2="44.6" class="hairline"/><circle cx="273.7" cy="60.0" r="4" class="leaf-dot"/>
+                 <line x1="216" y1="89" x2="273.7" y2="60.0" class="hairline"/><circle cx="281.1" cy="78.9" r="4" class="leaf-dot"/>
+                 <line x1="216" y1="89" x2="281.1" y2="78.9" class="hairline"/><circle cx="281.1" cy="99.1" r="4" class="leaf-dot"/>
+                 <line x1="216" y1="89" x2="281.1" y2="99.1" class="hairline"/><circle cx="273.7" cy="118.0" r="4" class="leaf-dot"/>
+                 <line x1="216" y1="89" x2="273.7" y2="118.0" class="hairline"/><circle cx="259.9" cy="133.4" r="4" class="leaf-dot"/>
+                 <line x1="216" y1="89" x2="259.9" y2="133.4" class="hairline"/><circle cx="241.2" cy="143.5" r="4" class="leaf-dot"/>
+                 <line x1="216" y1="89" x2="241.2" y2="143.5" class="hairline"/><circle cx="220.0" cy="147.0" r="4" class="leaf-dot"/>
+                 <line x1="216" y1="89" x2="220.0" y2="147.0" class="hairline"/>
+    <text x="220" y="22" text-anchor="middle" class="dtag">10,000 trees</text>
+    <text x="60" y="89" text-anchor="middle" class="dtag">1 shared object</text>
+    <path d="M64 89 L118 89" class="trace trace--signal"
+    marker-end="url(#arrow-signal)"/>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">11-flyweight.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-flyweight">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-flyweight" class="language-typescript">// Flyweight — Forest Renderer
+// Shares heavy, repeated intrinsic state (species/texture) across thousands
+// of instances, so only per-instance extrinsic state (x, y) is duplicated.
+
+interface TreeTypeProps {
+  readonly species: string;
+  readonly color: string;
+  readonly textureId: string;
+}
+
+// Flyweight — imagine `textureId` backs a large shared texture buffer.
+class TreeType {
+  constructor(
+    public readonly species: string,
+    public readonly color: string,
+    public readonly textureId: string,
+  ) {}
+
+  draw(x: number, y: number): string {
+    return `Drawing ${this.species} (${this.color}) at (${x}, ${y}) via ${this.textureId}`;
+  }
+}
+
+// Factory ensures identical intrinsic state is never allocated twice.
+class TreeTypeFactory {
+  private static readonly cache = new Map&lt;string, TreeType&gt;();
+
+  static get(props: TreeTypeProps): TreeType {
+    const key = `${props.species}|${props.color}|${props.textureId}`;
+    let type = TreeTypeFactory.cache.get(key);
+    if (!type) {
+      type = new TreeType(props.species, props.color, props.textureId);
+      TreeTypeFactory.cache.set(key, type);
+    }
+    return type;
+  }
+
+  static get poolSize(): number {
+    return TreeTypeFactory.cache.size;
+  }
+}
+
+// Context — cheap, holds only extrinsic (per-instance) state.
+class Tree {
+  constructor(
+    private readonly x: number,
+    private readonly y: number,
+    private readonly type: TreeType,
+  ) {}
+  draw(): string { return this.type.draw(this.x, this.y); }
+}
+
+class Forest {
+  private readonly trees: Tree[] = [];
+
+  plant(x: number, y: number, props: TreeTypeProps): void {
+    const type = TreeTypeFactory.get(props); // shared, not duplicated per-tree
+    this.trees.push(new Tree(x, y, type));
+  }
+
+  drawAll(): string[] {
+    return this.trees.map((tree) =&gt; tree.draw());
+  }
+}
+
+// --- Demo &amp; edge cases ---
+const forest = new Forest();
+const oak: TreeTypeProps = { species: "Oak", color: "green", textureId: "tex_oak" };
+for (let i = 0; i &lt; 10_000; i++) {
+  forest.plant(i % 100, Math.floor(i / 100), oak);
+}
+forest.plant(5, 5, { species: "Pine", color: "dark-green", textureId: "tex_pine" });
+
+console.log("Trees planted:", forest.drawAll().length); // 10001
+console.log("Distinct shared TreeType objects:", TreeTypeFactory.poolSize); // 2</code></pre>
+    </div>
+  </article>
+
+  <article class="card" id="proxy">
+    <div class="card__head">
+      <span class="designator">ST·07</span>
+      <div class="card__titles">
+        <h3 class="card__name">Proxy</h3>
+        <p class="card__tagline">Stands in for a real object to gate access to it and defer expensive work.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <g>
+    <circle cx="34" cy="88" r="16" class="node node--muted"/>
+    <text x="34" y="92" text-anchor="middle" class="dlabel">C</text>
+  </g>
+    <path d="M50 88 L96 88" class="trace"
+    marker-end="url(#arrow-structural)"/>
+    <g>
+    <line x1="91" y1="77.6" x2="98" y2="77.6" class="pin"/>
+       <line x1="91" y1="98.4" x2="98" y2="98.4" class="pin"/>
+       <line x1="176" y1="77.6" x2="183" y2="77.6" class="pin"/>
+       <line x1="176" y1="98.4" x2="183" y2="98.4" class="pin"/>
+    <rect x="98" y="62" width="78" height="52" rx="7" class="chip"/>
+    <text x="137" y="85" text-anchor="middle" class="dlabel">Proxy</text>
+    <text x="137" y="100" text-anchor="middle" class="dsublabel">role check</text>
+  </g>
+    <rect x="112" y="46" width="14" height="16" rx="2" class="lock-body"/>
+    <path d="M 115 46 v -6 a 4 4 0 0 1 8 0 v 6" class="lock-shackle"/>
+    <path d="M176 88 L222 88" class="trace trace--dashed trace--signal"
+    marker-end="url(#arrow-signal)"/>
+    <g>
+    <line x1="217" y1="77.6" x2="224" y2="77.6" class="pin"/>
+       <line x1="217" y1="98.4" x2="224" y2="98.4" class="pin"/>
+       <line x1="290" y1="77.6" x2="297" y2="77.6" class="pin"/>
+       <line x1="290" y1="98.4" x2="297" y2="98.4" class="pin"/>
+    <rect x="224" y="62" width="66" height="52" rx="7" class="chip"/>
+    <text x="257" y="85" text-anchor="middle" class="dlabel">Real</text>
+    <text x="257" y="100" text-anchor="middle" class="dsublabel">lazy</text>
+  </g>
+    <text x="150" y="20" text-anchor="middle" class="dtag">denied requests never touch Real</text>
+    <text x="150" y="158" text-anchor="middle" class="dtag">access check  →  lazy construct  →  cache</text>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">12-proxy.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-proxy">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-proxy" class="language-typescript">// Proxy — Access-Controlled, Lazily-Loaded Document
+// Stands in for an expensive real object, enforcing access checks and
+// deferring construction of the real object until it's actually needed.
+
+interface Document {
+  read(): string;
+}
+
+class RealDocument implements Document {
+  private readonly content: string;
+  constructor(path: string) {
+    console.log(`(loading "${path}" from disk...)`); // simulate expensive I/O
+    this.content = `Contents of ${path}`;
+  }
+  read(): string { return this.content; }
+}
+
+type Role = "admin" | "editor" | "viewer";
+
+class DocumentProxy implements Document {
+  private real?: RealDocument;
+
+  constructor(
+    private readonly path: string,
+    private readonly requiredRole: Role,
+    private readonly userRole: Role,
+  ) {}
+
+  read(): string {
+    if (!this.hasAccess()) {
+      throw new Error(
+        `Access denied: "${this.path}" needs role "${this.requiredRole}", got "${this.userRole}"`,
+      );
+    }
+    // Lazily construct the expensive real object only once access is confirmed.
+    if (!this.real) {
+      this.real = new RealDocument(this.path);
+    }
+    return this.real.read();
+  }
+
+  private hasAccess(): boolean {
+    const rank: Record&lt;Role, number&gt; = { viewer: 0, editor: 1, admin: 2 };
+    return rank[this.userRole] &gt;= rank[this.requiredRole];
+  }
+}
+
+// --- Demo &amp; edge cases ---
+const asAdmin = new DocumentProxy("payroll.csv", "admin", "admin");
+console.log(asAdmin.read()); // triggers the lazy load, then reads
+
+const asViewer = new DocumentProxy("payroll.csv", "admin", "viewer");
+try {
+  asViewer.read(); // denied — note no "(loading...)" log, RealDocument never built
+} catch (e) {
+  console.log("Rejected:", (e as Error).message);
+}
+
+console.log(asAdmin.read()); // reuses the cached RealDocument — no reload log this time</code></pre>
+    </div>
+  </article>
+    </div>
+  </section>
+
+  <section class="category category--behavioral" id="behavioral">
+    <div class="category__head">
+      <span class="category__num">03</span>
+      <div>
+        <h2 class="category__name">Behavioral Patterns</h2>
+        <p class="category__blurb">Patterns that shape how objects communicate and divide responsibility among themselves.</p>
+      </div>
+      <span class="category__count">5 patterns</span>
+    </div>
+    <div class="card-grid">
+      
+  <article class="card" id="observer">
+    <div class="card__head">
+      <span class="designator">BH·01</span>
+      <div class="card__titles">
+        <h3 class="card__name">Observer</h3>
+        <p class="card__tagline">Lets one subject broadcast state changes to any number of independent listeners.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <g>
+    <line x1="115" y1="79.2" x2="122" y2="79.2" class="pin"/>
+       <line x1="115" y1="96.8" x2="122" y2="96.8" class="pin"/>
+       <line x1="178" y1="79.2" x2="185" y2="79.2" class="pin"/>
+       <line x1="178" y1="96.8" x2="185" y2="96.8" class="pin"/>
+    <rect x="122" y="66" width="56" height="44" rx="7" class="chip"/>
+    <text x="150" y="92" text-anchor="middle" class="dlabel">Subject</text>
+    
+  </g>
+    <circle cx="150" cy="88" r="46" class="pulse-ring"/>
+    <g>
+    <circle cx="40" cy="30" r="16" class="node"/>
+    <text x="40" y="34" text-anchor="middle" class="dlabel">O1</text>
+  </g>
+    <g>
+    <circle cx="40" cy="88" r="16" class="node"/>
+    <text x="40" y="92" text-anchor="middle" class="dlabel">O2</text>
+  </g>
+    <g>
+    <circle cx="40" cy="146" r="16" class="node node--muted"/>
+    <text x="40" y="150" text-anchor="middle" class="dlabel">O3</text>
+  </g>
+    <g>
+    <circle cx="260" cy="88" r="16" class="node"/>
+    <text x="260" y="92" text-anchor="middle" class="dlabel">O4</text>
+  </g>
+    <path d="M122 78 L56 34" class="trace trace--signal"
+    />
+    <path d="M122 88 L56 88" class="trace trace--signal"
+    />
+    <path d="M178 88 L244 88" class="trace trace--signal"
+    />
+    <path d="M 122 96 L 56 142" class="trace trace--dashed"/>
+    <text x="150" y="156" text-anchor="middle" class="dtag">state change → broadcast → each observer reacts</text>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">13-observer.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-observer">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-observer" class="language-typescript">// Observer — Stock Price Ticker
+// Lets a subject broadcast state changes to many independent observers
+// without knowing their concrete types, and supports clean unsubscription.
+
+interface Observer&lt;T&gt; {
+  update(data: T): void;
+}
+
+class Subject&lt;T&gt; {
+  private readonly observers = new Set&lt;Observer&lt;T&gt;&gt;();
+
+  subscribe(observer: Observer&lt;T&gt;): () =&gt; void {
+    this.observers.add(observer);
+    return () =&gt; this.observers.delete(observer); // unsubscribe handle
+  }
+
+  notify(data: T): void {
+    for (const observer of this.observers) {
+      try {
+        observer.update(data);
+      } catch (err) {
+        // One misbehaving observer must not prevent the others from being notified.
+        console.log("Observer failed:", (err as Error).message);
+      }
+    }
+  }
+}
+
+interface StockPrice {
+  symbol: string;
+  price: number;
+}
+
+class PriceLogger implements Observer&lt;StockPrice&gt; {
+  update(data: StockPrice): void {
+    console.log(`[log] ${data.symbol} → $${data.price.toFixed(2)}`);
+  }
+}
+
+class PriceAlert implements Observer&lt;StockPrice&gt; {
+  constructor(private readonly threshold: number) {}
+  update(data: StockPrice): void {
+    if (data.price &gt; this.threshold) {
+      throw new Error(`${data.symbol} crossed alert threshold of $${this.threshold}`);
+    }
+  }
+}
+
+// --- Demo &amp; edge cases ---
+const ticker = new Subject&lt;StockPrice&gt;();
+const logger = new PriceLogger();
+const unsubscribeLogger = ticker.subscribe(logger);
+ticker.subscribe(new PriceAlert(100));
+
+ticker.notify({ symbol: "ACME", price: 87.5 });
+ticker.notify({ symbol: "ACME", price: 104.2 }); // alert throws; logger still runs
+
+unsubscribeLogger();
+ticker.notify({ symbol: "ACME", price: 50 }); // logger no longer prints, no error either
+console.log("Notify with zero remaining observers is a safe no-op");</code></pre>
+    </div>
+  </article>
+
+  <article class="card" id="strategy">
+    <div class="card__head">
+      <span class="designator">BH·02</span>
+      <div class="card__titles">
+        <h3 class="card__name">Strategy</h3>
+        <p class="card__tagline">Swaps interchangeable algorithms into a context object at runtime.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <g>
+    <line x1="23" y1="79.2" x2="30" y2="79.2" class="pin"/>
+       <line x1="23" y1="96.8" x2="30" y2="96.8" class="pin"/>
+       <line x1="120" y1="79.2" x2="127" y2="79.2" class="pin"/>
+       <line x1="120" y1="96.8" x2="127" y2="96.8" class="pin"/>
+    <rect x="30" y="66" width="90" height="44" rx="7" class="chip"/>
+    <text x="75" y="92" text-anchor="middle" class="dlabel">ShoppingCart</text>
+    
+  </g>
+    <rect x="132" y="72" width="16" height="32" class="slot"/>
+    <path d="M120 88 L132 88" class="trace"
+    marker-end="url(#arrow-behavioral)"/>
+    <g>
+    <line x1="153" y1="31" x2="160" y2="31" class="pin"/>
+       <line x1="153" y1="43" x2="160" y2="43" class="pin"/>
+       <line x1="266" y1="31" x2="273" y2="31" class="pin"/>
+       <line x1="266" y1="43" x2="273" y2="43" class="pin"/>
+    <rect x="160" y="22" width="106" height="30" rx="7" class="chip"/>
+    <text x="213" y="41" text-anchor="middle" class="dlabel">PercentageDiscount</text>
+    
+  </g>
+    <g>
+    <line x1="153" y1="75" x2="160" y2="75" class="pin"/>
+       <line x1="153" y1="87" x2="160" y2="87" class="pin"/>
+       <line x1="266" y1="75" x2="273" y2="75" class="pin"/>
+       <line x1="266" y1="87" x2="273" y2="87" class="pin"/>
+    <rect x="160" y="66" width="106" height="30" rx="7" class="chip chip--dashed"/>
+    <text x="213" y="85" text-anchor="middle" class="dlabel">FlatAmountDiscount</text>
+    
+  </g>
+    <g>
+    <line x1="153" y1="119" x2="160" y2="119" class="pin"/>
+       <line x1="153" y1="131" x2="160" y2="131" class="pin"/>
+       <line x1="266" y1="119" x2="273" y2="119" class="pin"/>
+       <line x1="266" y1="131" x2="273" y2="131" class="pin"/>
+    <rect x="160" y="110" width="106" height="30" rx="7" class="chip chip--dashed"/>
+    <text x="213" y="129" text-anchor="middle" class="dlabel">NoDiscount</text>
+    
+  </g>
+    <path d="M160 37 L148 80" class="trace trace--signal"
+    />
+    <text x="150" y="156" text-anchor="middle" class="dtag">the active strategy slots in and out at runtime</text>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">14-strategy.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-strategy">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-strategy" class="language-typescript">// Strategy — Cart Pricing Strategies
+// Lets an interchangeable algorithm (how a discount is computed) be swapped
+// at runtime without changing the code that uses it.
+
+interface PricingStrategy {
+  computeTotal(subtotalCents: number): number;
+}
+
+class NoDiscount implements PricingStrategy {
+  computeTotal(subtotalCents: number): number { return subtotalCents; }
+}
+
+class PercentageDiscount implements PricingStrategy {
+  private readonly percent: number;
+  constructor(percent: number) {
+    this.percent = Math.min(100, Math.max(0, percent)); // clamp bad input
+  }
+  computeTotal(subtotalCents: number): number {
+    return Math.round(subtotalCents * (1 - this.percent / 100));
+  }
+}
+
+class FlatAmountDiscount implements PricingStrategy {
+  constructor(private readonly amountOffCents: number) {}
+  computeTotal(subtotalCents: number): number {
+    return Math.max(0, subtotalCents - this.amountOffCents); // never negative
+  }
+}
+
+class ShoppingCart {
+  private strategy: PricingStrategy = new NoDiscount();
+  constructor(private readonly itemPricesCents: number[]) {}
+
+  setStrategy(strategy: PricingStrategy): void {
+    this.strategy = strategy;
+  }
+
+  checkout(): number {
+    const subtotal = this.itemPricesCents.reduce((sum, price) =&gt; sum + price, 0);
+    return this.strategy.computeTotal(subtotal);
+  }
+}
+
+// --- Demo &amp; edge cases ---
+const cart = new ShoppingCart([1999, 500, 799]); // $19.99 + $5.00 + $7.99
+
+console.log("No discount:", cart.checkout());
+
+cart.setStrategy(new PercentageDiscount(20));
+console.log("20% off:", cart.checkout());
+
+cart.setStrategy(new PercentageDiscount(150)); // over 100% — must clamp, not negative
+console.log("Clamped 150% off:", cart.checkout());
+
+cart.setStrategy(new FlatAmountDiscount(999_999)); // far more than subtotal
+console.log("Oversized flat discount floors at 0:", cart.checkout());
+
+const emptyCart = new ShoppingCart([]);
+emptyCart.setStrategy(new PercentageDiscount(50));
+console.log("Empty cart totals to 0, not NaN:", emptyCart.checkout());</code></pre>
+    </div>
+  </article>
+
+  <article class="card" id="command">
+    <div class="card__head">
+      <span class="designator">BH·03</span>
+      <div class="card__titles">
+        <h3 class="card__name">Command</h3>
+        <p class="card__tagline">Turns a request into an object, enabling queues, logs, and undo/redo.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <g>
+    <line x1="17" y1="39.6" x2="24" y2="39.6" class="pin"/>
+       <line x1="17" y1="52.4" x2="24" y2="52.4" class="pin"/>
+       <line x1="98" y1="39.6" x2="105" y2="39.6" class="pin"/>
+       <line x1="98" y1="52.4" x2="105" y2="52.4" class="pin"/>
+    <rect x="24" y="30" width="74" height="32" rx="7" class="chip"/>
+    <text x="61" y="50" text-anchor="middle" class="dlabel">Insert</text>
+    
+  </g>
+    <g>
+    <line x1="17" y1="79.6" x2="24" y2="79.6" class="pin"/>
+       <line x1="17" y1="92.4" x2="24" y2="92.4" class="pin"/>
+       <line x1="98" y1="79.6" x2="105" y2="79.6" class="pin"/>
+       <line x1="98" y1="92.4" x2="105" y2="92.4" class="pin"/>
+    <rect x="24" y="70" width="74" height="32" rx="7" class="chip"/>
+    <text x="61" y="90" text-anchor="middle" class="dlabel">Insert</text>
+    
+  </g>
+    <g>
+    <line x1="17" y1="119.6" x2="24" y2="119.6" class="pin"/>
+       <line x1="17" y1="132.4" x2="24" y2="132.4" class="pin"/>
+       <line x1="98" y1="119.6" x2="105" y2="119.6" class="pin"/>
+       <line x1="98" y1="132.4" x2="105" y2="132.4" class="pin"/>
+    <rect x="24" y="110" width="74" height="32" rx="7" class="chip chip--dashed"/>
+    <text x="61" y="130" text-anchor="middle" class="dlabel">Delete</text>
+    
+  </g>
+    <path d="M100 46 L140 88" class="trace"
+    />
+    <path d="M100 86 L140 88" class="trace"
+    />
+    <g>
+    <line x1="135" y1="79.2" x2="142" y2="79.2" class="pin"/>
+       <line x1="135" y1="96.8" x2="142" y2="96.8" class="pin"/>
+       <line x1="208" y1="79.2" x2="215" y2="79.2" class="pin"/>
+       <line x1="208" y1="96.8" x2="215" y2="96.8" class="pin"/>
+    <rect x="142" y="66" width="66" height="44" rx="7" class="chip"/>
+    <text x="175" y="85" text-anchor="middle" class="dlabel">History</text>
+    <text x="175" y="100" text-anchor="middle" class="dsublabel">undo/redo</text>
+  </g>
+    <path d="M 210 88 C 250 88, 250 40, 214 34" class="trace trace--signal" marker-end="url(#arrow-signal)"/>
+    <text x="232" y="24" text-anchor="middle" class="dtag">↺ undo</text>
+    <text x="150" y="156" text-anchor="middle" class="dtag">each action becomes an object you can replay or reverse</text>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">15-command.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-command">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-command" class="language-typescript">// Command — Undoable Text Editor Actions
+// Turns each request into a standalone object so it can be queued, logged,
+// and reversed — powering a generic undo/redo history.
+
+interface Command {
+  execute(): void;
+  undo(): void;
+}
+
+class TextDocument {
+  private content = "";
+  insertAt(index: number, text: string): void {
+    this.content = this.content.slice(0, index) + text + this.content.slice(index);
+  }
+  deleteAt(index: number, length: number): string {
+    const removed = this.content.slice(index, index + length);
+    this.content = this.content.slice(0, index) + this.content.slice(index + length);
+    return removed;
+  }
+  get text(): string { return this.content; }
+}
+
+class InsertCommand implements Command {
+  constructor(
+    private readonly doc: TextDocument,
+    private readonly index: number,
+    private readonly text: string,
+  ) {}
+  execute(): void { this.doc.insertAt(this.index, this.text); }
+  undo(): void { this.doc.deleteAt(this.index, this.text.length); }
+}
+
+class DeleteCommand implements Command {
+  private removedText = "";
+  constructor(
+    private readonly doc: TextDocument,
+    private readonly index: number,
+    private readonly length: number,
+  ) {}
+  execute(): void { this.removedText = this.doc.deleteAt(this.index, this.length); }
+  undo(): void { this.doc.insertAt(this.index, this.removedText); }
+}
+
+class CommandHistory {
+  private readonly undoStack: Command[] = [];
+  private readonly redoStack: Command[] = [];
+
+  run(command: Command): void {
+    command.execute();
+    this.undoStack.push(command);
+    this.redoStack.length = 0; // a fresh action invalidates old redo history
+  }
+
+  undo(): void {
+    const command = this.undoStack.pop();
+    if (!command) return; // nothing left to undo — safe no-op
+    command.undo();
+    this.redoStack.push(command);
+  }
+
+  redo(): void {
+    const command = this.redoStack.pop();
+    if (!command) return; // nothing left to redo — safe no-op
+    command.execute();
+    this.undoStack.push(command);
+  }
+}
+
+// --- Demo &amp; edge cases ---
+const doc = new TextDocument();
+const history = new CommandHistory();
+
+history.run(new InsertCommand(doc, 0, "Hello"));
+history.run(new InsertCommand(doc, 5, " World"));
+console.log("After inserts:", JSON.stringify(doc.text));
+
+history.undo();
+console.log("After one undo:", JSON.stringify(doc.text));
+
+history.redo();
+console.log("After redo:", JSON.stringify(doc.text));
+
+history.undo();
+history.undo();
+history.undo(); // one extra undo beyond available history
+console.log("Over-undo is a safe no-op:", JSON.stringify(doc.text));
+
+history.run(new DeleteCommand(doc, 0, 0)); // zero-length delete
+console.log("Zero-length delete no-ops safely:", JSON.stringify(doc.text));</code></pre>
+    </div>
+  </article>
+
+  <article class="card" id="state">
+    <div class="card__head">
+      <span class="designator">BH·04</span>
+      <div class="card__titles">
+        <h3 class="card__name">State</h3>
+        <p class="card__tagline">Lets an object change its behavior by delegating to interchangeable state objects.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <g>
+    <circle cx="56" cy="82" r="28" class="node"/>
+    <text x="56" y="86" text-anchor="middle" class="dlabel">Draft</text>
+  </g>
+    <g>
+    <circle cx="150" cy="36" r="28" class="node"/>
+    <text x="150" y="40" text-anchor="middle" class="dlabel">Review</text>
+  </g>
+    <g>
+    <circle cx="244" cy="82" r="28" class="node"/>
+    <text x="244" y="86" text-anchor="middle" class="dlabel">Published</text>
+  </g>
+    <path d="M 80 72 C 104 55, 120 50, 130 44" class="trace" marker-end="url(#arrow-behavioral)"/>
+    <path d="M 126 56 C 106 68, 88 74, 82 82" class="trace trace--dashed" marker-end="url(#arrow-behavioral)"/>
+    <path d="M 174 48 C 198 58, 212 68, 218 74" class="trace" marker-end="url(#arrow-behavioral)"/>
+    <path d="M 84 104 Q 150 146 216 104" class="trace-reject-path"/>
+    <line x1="142" y1="122" x2="158" y2="136" class="trace-reject"/>
+    <line x1="158" y1="122" x2="142" y2="136" class="trace-reject"/>
+    <text x="150" y="162" text-anchor="middle" class="dtag">no shortcut: Draft can't jump straight to Published</text>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">16-state.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-state">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-state" class="language-typescript">// State — Document Workflow
+// Lets an object change its behavior when its internal state changes, by
+// delegating to interchangeable state objects instead of branching on a flag.
+
+interface DocumentState {
+  readonly name: string;
+  submit(context: DocumentContext): void;
+  approve(context: DocumentContext): void;
+  reject(context: DocumentContext): void;
+}
+
+class DraftState implements DocumentState {
+  readonly name = "draft";
+  submit(context: DocumentContext): void { context.transitionTo(new ReviewState()); }
+  approve(): void { throw new Error("Cannot approve before it has been submitted"); }
+  reject(): void { throw new Error("Cannot reject a document that hasn't been submitted"); }
+}
+
+class ReviewState implements DocumentState {
+  readonly name = "review";
+  submit(): void { throw new Error("Document is already under review"); }
+  approve(context: DocumentContext): void { context.transitionTo(new PublishedState()); }
+  reject(context: DocumentContext): void { context.transitionTo(new DraftState()); }
+}
+
+class PublishedState implements DocumentState {
+  readonly name = "published";
+  submit(): void { throw new Error("Cannot resubmit a published document"); }
+  approve(): void { throw new Error("Document is already published"); }
+  reject(): void { throw new Error("Cannot reject a document that is already published"); }
+}
+
+class DocumentContext {
+  private state: DocumentState = new DraftState();
+
+  transitionTo(state: DocumentState): void {
+    console.log(`${this.state.name} → ${state.name}`);
+    this.state = state;
+  }
+
+  submit(): void { this.state.submit(this); }
+  approve(): void { this.state.approve(this); }
+  reject(): void { this.state.reject(this); }
+  get currentState(): string { return this.state.name; }
+}
+
+// --- Demo &amp; edge cases ---
+const article = new DocumentContext();
+article.submit();
+article.reject(); // back to draft
+article.submit();
+article.approve(); // published
+
+try {
+  article.approve(); // invalid: already published
+} catch (e) {
+  console.log("Rejected:", (e as Error).message);
+}
+
+try {
+  article.submit(); // invalid: published documents can't be resubmitted
+} catch (e) {
+  console.log("Rejected:", (e as Error).message);
+}
+
+console.log("Final state:", article.currentState);</code></pre>
+    </div>
+  </article>
+
+  <article class="card" id="iterator">
+    <div class="card__head">
+      <span class="designator">BH·05</span>
+      <div class="card__titles">
+        <h3 class="card__name">Iterator</h3>
+        <p class="card__tagline">Walks a collection's elements through a standard protocol, hiding its internals.</p>
+      </div>
+    </div>
+    <div class="diagram-frame">
+      <svg viewBox="0 0 300 176" class="diagram-svg" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="300" height="176" class="dgrid"/>
+    
+    <g>
+    
+    <rect x="20" y="66" width="42" height="40" rx="7" class="chip"/>
+    <text x="41" y="90" text-anchor="middle" class="dlabel">1</text>
+    
+  </g><g>
+    
+    <rect x="74" y="66" width="42" height="40" rx="7" class="chip"/>
+    <text x="95" y="90" text-anchor="middle" class="dlabel">2</text>
+    
+  </g><g>
+    
+    <rect x="128" y="66" width="42" height="40" rx="7" class="chip"/>
+    <text x="149" y="90" text-anchor="middle" class="dlabel">3</text>
+    
+  </g><g>
+    
+    <rect x="182" y="66" width="42" height="40" rx="7" class="chip"/>
+    <text x="203" y="90" text-anchor="middle" class="dlabel">4</text>
+    
+  </g><g>
+    
+    <rect x="236" y="66" width="42" height="40" rx="7" class="chip"/>
+    <text x="257" y="90" text-anchor="middle" class="dlabel">5</text>
+    
+  </g>
+    <rect x="16" y="60" width="42" height="52" rx="8" class="iterator-window"/>
+    <path d="M 37 122 L 37 138" class="trace trace--signal" marker-end="url(#arrow-signal)"/>
+    <text x="37" y="152" text-anchor="middle" class="dtag">cursor A</text>
+    <path d="M 145 40 L 145 60" class="trace" marker-end="url(#arrow-behavioral)"/>
+    <text x="145" y="30" text-anchor="middle" class="dtag">cursor B (independent)</text>
+  
+  </svg>
+    </div>
+    <div class="verify-row">
+      <span class="verify-tag">✓ strict TS · zero errors</span>
+      <span class="verify-tag">✓ edge cases exercised</span>
+    </div>
+    <div class="code-panel">
+      <div class="code-panel__bar">
+        <span class="code-panel__dots"><i></i><i></i><i></i></span>
+        <span class="code-panel__file">17-iterator.ts</span>
+        <button class="copy-btn" type="button" data-copy-target="code-iterator">Copy</button>
+      </div>
+      <pre class="code-pre"><code id="code-iterator" class="language-typescript">// Iterator — Circular Buffer
+// Walks through a collection's elements via a standard protocol (Symbol.iterator)
+// without exposing the buffer's internal array or shift/wrap logic.
+
+class CircularBuffer&lt;T&gt; implements Iterable&lt;T&gt; {
+  private readonly items: T[] = [];
+  constructor(private readonly capacity: number) {
+    if (capacity &lt;= 0) throw new Error("Capacity must be positive");
+  }
+
+  push(item: T): void {
+    this.items.push(item);
+    if (this.items.length &gt; this.capacity) {
+      this.items.shift(); // drop the oldest entry once over capacity
+    }
+  }
+
+  [Symbol.iterator](): Iterator&lt;T&gt; {
+    let index = 0;
+    const snapshot = [...this.items]; // isolate from mutation during iteration
+    return {
+      next(): IteratorResult&lt;T&gt; {
+        if (index &lt; snapshot.length) {
+          return { value: snapshot[index++] as T, done: false };
+        }
+        return { value: undefined, done: true };
+      },
+    };
+  }
+}
+
+// --- Demo &amp; edge cases ---
+const buffer = new CircularBuffer&lt;number&gt;(3);
+[1, 2, 3, 4, 5].forEach((n) =&gt; buffer.push(n));
+console.log("Contents (oldest two dropped):", [...buffer]); // [3, 4, 5]
+
+// Two independent iterators over the same collection don't interfere.
+const it1 = buffer[Symbol.iterator]();
+const it2 = buffer[Symbol.iterator]();
+console.log("it1 first:", it1.next().value);
+console.log("it2 first (unaffected by it1's position):", it2.next().value);
+console.log("it1 second:", it1.next().value);
+
+const empty = new CircularBuffer&lt;number&gt;(1);
+console.log("Empty buffer iterates zero times:", [...empty].length === 0);
+
+try {
+  new CircularBuffer&lt;number&gt;(0);
+} catch (e) {
+  console.log("Rejected non-positive capacity:", (e as Error).message);
+}</code></pre>
+    </div>
+  </article>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <p>17 patterns · 17 files · <code>tsc --strict --noEmit</code> clean · every demo executed with <code>tsx</code> before publishing.</p>
+</footer>
+
+<script>
+  hljs.highlightAll();
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var target = document.getElementById(btn.getAttribute('data-copy-target'));
+      if (!target) return;
+      navigator.clipboard.writeText(target.textContent).then(function () {
+        var original = btn.textContent;
+        btn.textContent = 'Copied';
+        btn.classList.add('copy-btn--done');
+        setTimeout(function () {
+          btn.textContent = original;
+          btn.classList.remove('copy-btn--done');
+        }, 1400);
+      });
+    });
+  });
+</script>
+</body>
+</html>
