@@ -20,19 +20,23 @@
 		"name": "DesignWithCory",
 		"logo": "{% static 'images/ChatGPTImageAug112026at01_52_09AM.png' %}",
 		"sameAs": [
-				"https://facebook.com/name",
-				"https://twitter.com/name",
-				"https://instagram.com/name"
+				"https://facebook.com/cory.comly",
+				"https://twitter.com/kindoshen",
+				"https://instagram.com/cory.comly",
+				"https://linkedin.com/in/cory-comly",
+				"https://github.com/kindoshen"
 		]
 }</script>
     <meta name="theme-color" content="#7190f0">
     <meta name="twitter:site" content="@kindoshen">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{% block title %}Home{% endblock %} | Design With Cory">
-    <meta name="twitter:description" content="{% block meta_description %}Cory Comly is a senior software engineer, blockchain consultant, and security analyst with 12+ years of experience building secure, scalable web and mobile products.{% endblock %}">
+    {# Django only allows a given block name once per template, so twitter:*/og:* share static fallback copy — #}
+    {# override og_title/og_description (alongside title/meta_description) on a page for a distinct share-card. #}
+    <meta name="twitter:title" content="Design With Cory — Senior Software Engineer">
+    <meta name="twitter:description" content="Cory Comly is a senior software engineer, blockchain consultant, and security analyst with 12+ years of experience building secure, scalable web and mobile products.">
     <meta name="twitter:image" content="{% static 'images/ChatGPTImageAug112026at01_52_09AM.png' %}">
-    <meta property="og:title" content="{% block title %}Home{% endblock %} | Design With Cory">
-    <meta property="og:description" content="{% block meta_description %}Cory Comly is a senior software engineer, blockchain consultant, and security analyst with 12+ years of experience building secure, scalable web and mobile products.{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Design With Cory — Senior Software Engineer{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Cory Comly is a senior software engineer, blockchain consultant, and security analyst with 12+ years of experience building secure, scalable web and mobile products.{% endblock %}">
     <meta property="og:image" content="{% static 'images/ChatGPTImageAug112026at01_52_09AM.png' %}">
     <meta property="og:type" content="website">
   <meta name="referrer" content="origin"><meta data-intl-tel-input-cdn-path="{% static 'intlTelInput/' %}"></head>
