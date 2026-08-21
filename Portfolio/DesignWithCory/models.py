@@ -1,4 +1,32 @@
 from django.db import models
+from django.urls import reverse
+
+
+class BlogPost(models.Model):
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=220, unique=True)
+    cover_image = models.FileField(
+        upload_to="blog/", help_text="Shown on the blog card and post header."
+    )
+    excerpt = models.TextField(
+        help_text="First-paragraph teaser shown on the card, above the fade-out."
+    )
+    body = models.TextField(help_text="Full post. Paragraphs (blank-line separated) are rendered as <p>.")
+    published_at = models.DateTimeField()
+    is_published = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["-published_at"]
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse("blog_detail", args=[self.slug])
+
+    @property
+    def body_paragraphs(self):
+        return [p.strip() for p in self.body.split("\n\n") if p.strip()]
 
 
 class WorkSample(models.Model):

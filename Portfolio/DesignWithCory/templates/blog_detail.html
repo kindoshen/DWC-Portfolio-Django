@@ -1,0 +1,25 @@
+{# templates/blog_detail.html — a single blog post. #}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ post.title }}{% endblock %}
+{% block meta_description %}{{ post.excerpt }}{% endblock %}
+{% block og_title %}{{ post.title }}{% endblock %}
+{% block og_description %}{{ post.excerpt }}{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/pages.css' %}">
+{% endblock %}
+
+{% block content %}
+<article class="blog-post">
+  <img class="blog-post__cover" src="{{ post.cover_image.url }}" alt="{{ post.title }}">
+  <span class="blog-post__meta">{{ post.published_at|date:"F j, Y" }}</span>
+  <h1>{{ post.title }}</h1>
+  <div class="page-copy">
+    {% for paragraph in post.body_paragraphs %}
+      <p>{{ paragraph }}</p>
+    {% endfor %}
+  </div>
+</article>
+{% endblock %}
