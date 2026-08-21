@@ -1,0 +1,16 @@
+{# templates/landing.html — home page: base shell + every section partial, in source order. #}
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    {% include "includes/hero.html" %}
+    {% include "includes/elevator_pitch.html" %}
+    {% include "includes/technical_capabilities.html" %}
+    {% include "includes/testimonials.html" %}
+    {% include "includes/lead_gen.html" %}
+    {% include "includes/companies_showcase.html" %}
+    {% include "includes/project_showcase.html" %}
+    {% include "includes/educational_materials.html" %}
+    {% include "includes/contact_me.html" %}
+{% endblock %}
