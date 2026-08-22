@@ -46,4 +46,8 @@ ENV/
 env/
 .venv/
 pip-log.txt
-pip-delete-this-directory.txt   
+pip-delete-this-directory.txt
+
+# --- Test coverage ---
+.coverage
+htmlcov/   
