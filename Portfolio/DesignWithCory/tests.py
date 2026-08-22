@@ -4,6 +4,8 @@ WorkSample.image) use a temporary MEDIA_ROOT so tests never touch or depend on r
 uploaded content in media/.
 """
 
+import io
+import os
 import shutil
 import tempfile
 from datetime import timedelta
@@ -12,6 +14,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image
 
 from .models import BlogPost, Resume, WorkSample
 
@@ -20,6 +23,25 @@ TEMP_MEDIA_ROOT = tempfile.mkdtemp(prefix="dwc-test-media-")
 
 def tearDownModule():
     shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+
+
+def write_real_image(relative_path, image_format):
+    """Writes a genuine, tiny, Pillow-openable image at MEDIA_ROOT/relative_path.
+
+    Unlike SimpleUploadedFile(..., b"fake-image-bytes", ...) elsewhere in this file —
+    fine for models that only ever read a FileField's .url — work_sample_item.html reads
+    sample.image.width/.height, which makes Django actually open() and decode the file
+    at render time. A page that renders any seeded WorkSample (0002_seed_work_samples.py)
+    needs a real file sitting at that exact seeded path inside TEMP_MEDIA_ROOT, or the
+    request 500s on FileNotFoundError — not a hypothetical, this is exactly what happens
+    if a real deploy's media/ is ever missing a file a live DB row still points at.
+    """
+    full_path = os.path.join(TEMP_MEDIA_ROOT, relative_path)
+    os.makedirs(os.path.dirname(full_path), exist_ok=True)
+    buffer = io.BytesIO()
+    Image.new("RGB", (2, 2)).save(buffer, format=image_format)
+    with open(full_path, "wb") as f:
+        f.write(buffer.getvalue())
 
 
 def make_blog_post(**overrides):
@@ -120,6 +142,17 @@ class WorkSampleModelTests(TestCase):
 
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PublicViewTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # The two seeded WorkSample rows (0002_seed_work_samples.py) that still have a
+        # real (non-blank) image — every WorkSample-displaying page renders these
+        # alongside whatever a given test creates, and work_sample_item.html needs an
+        # openable file at each path. EstiMate's seeded image was cleared by
+        # 0007_estimate_backend_copy.py, so it isn't in this list.
+        write_real_image("work_samples/wHNT.jpg", "JPEG")
+        write_real_image("work_samples/bountydashboard-cover.png", "PNG")
+
     def test_home_page_loads(self):
         response = self.client.get(reverse("designWithCory"))
         self.assertEqual(response.status_code, 200)
