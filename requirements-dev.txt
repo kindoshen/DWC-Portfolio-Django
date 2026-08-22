@@ -1,0 +1,4 @@
+-r requirements.txt
+
+# Test-only tooling — not needed to run the site, only to develop it.
+coverage==7.10.7

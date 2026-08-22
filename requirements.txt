@@ -1,3 +1,14 @@
 Django==4.2.30
 whitenoise==6.11.0
 Pillow==11.3.0
+
+# Postgres support (Docker/production) — see Portfolio/Portfolio/settings.py's DATABASES.
+# Without DATABASE_URL set, the app still falls back to SQLite and neither of these do
+# anything at runtime, but they need to be installed either way for settings.py to import.
+dj-database-url==3.0.1
+psycopg2-binary==2.9.12
+
+# Production WSGI server — see Dockerfile / docker-compose.yml. Not used by
+# `manage.py runserver` (dev only), so not load-bearing for local development.
+gunicorn==23.0.0
+django-ratelimit==4.1.0

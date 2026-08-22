@@ -1,0 +1,50 @@
+# Runs the whole stack: Postgres + the Django app behind Gunicorn. See README.md >
+# Deployment > Docker for the full walkthrough. `.env` (copy .env.example) supplies both
+# the Django settings env vars and the POSTGRES_*/WEB_PORT ones used directly below.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-designwithcory}
+      POSTGRES_USER: ${POSTGRES_USER:-designwithcory}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-designwithcory}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Not published to the host by default — only the `web` service needs to reach this,
+    # over the compose-managed internal network. Uncomment to inspect the DB directly:
+    # ports:
+    #   - "5432:5432"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Built from the same POSTGRES_* values .env already sets for the db service, so
+      # there's exactly one place to change credentials, not two.
+      DATABASE_URL: postgres://${POSTGRES_USER:-designwithcory}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-designwithcory}
+    ports:
+      - "${WEB_PORT:-8000}:8000"
+    volumes:
+      # User-uploaded content and collectstatic output both need to survive a container
+      # recreate (`docker compose up` after a `build`) — bind-mounting the same
+      # directories manage.py already uses locally keeps this consistent with a non-
+      # Docker deployment rather than introducing Docker-only paths.
+      - ./Portfolio/media:/app/media
+      - ./Portfolio/productionfiles:/app/productionfiles
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

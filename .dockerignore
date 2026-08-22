@@ -1,0 +1,33 @@
+# Keeps the build context (and the risk of anything sensitive ending up baked into an
+# image layer) small. Mirrors .gitignore's spirit but is its own file on purpose — what
+# belongs in git and what belongs in a Docker build context aren't quite the same list
+# (e.g. .git/ itself should never be sent to the Docker daemon, but obviously is in git).
+
+.git/
+.gitignore
+.github/
+
+env/
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Local dev DB/media — the container gets these via docker-compose.yml volumes/env,
+# never baked into the image itself.
+Portfolio/db.sqlite3
+Portfolio/media/
+Portfolio/productionfiles/
+
+.env
+.env.*
+!.env.example
+*.log
+
+.coverage
+htmlcov/
+
+README.md
+LICENSE
+*.md

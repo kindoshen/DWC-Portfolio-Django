@@ -1,0 +1,8 @@
+[run]
+source = DesignWithCory,crm
+omit =
+    */migrations/*
+    */tests.py
+
+[report]
+show_missing = True

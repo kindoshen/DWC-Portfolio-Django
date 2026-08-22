@@ -11,10 +11,10 @@
         <div class="blog-grid blog-grid--teaser">
           {% for post in recent_posts %}
             <a href="{{ post.get_absolute_url }}" class="blog-card">
-              <img class="blog-card__image" src="{{ post.cover_image.url }}" alt="{{ post.title }}">
+              <img class="blog-card__image" src="{{ post.cover_image.url }}" alt="{{ post.title }}" loading="lazy">
               <div class="blog-card__body">
                 <span class="blog-post__meta">{{ post.published_at|date:"M j, Y" }}</span>
-                <h2 class="blog-card__title">{{ post.title }}</h2>
+                <h3 class="blog-card__title">{{ post.title }}</h3>
                 <div class="blog-card__excerpt-wrap">
                   <p class="blog-card__excerpt">{{ post.excerpt }}</p>
                 </div>

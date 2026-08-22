@@ -1,0 +1,107 @@
+{# includes/estimate_device_showcase.html — bespoke multi-device hero for the EstiMate work sample. #}
+{# There's no real 3-screenshot set of the app to work from, so this is hand-built HTML/CSS (styling in #}
+{# pages.css under "EstiMate device showcase"), not a stock screenshot — three views of the same real #}
+{# in-app data (the lead, quote, and property from the screenshot this replaced), laid out true to their #}
+{# device frames. One-off: work_sample_item.html includes this by sample.title, not by display_type, since #}
+{# there's nothing generic about it to reuse for a future work sample. #}
+<p class="device-showcase__quip">One Codebase. Every Screen. Zero Excuses.</p>
+<div class="device-showcase">
+
+  <div class="device device--android" aria-hidden="true">
+    <span class="device__cutout device__cutout--punch-hole"></span>
+    <div class="device__screen">
+      <div class="device__pane">
+        <p class="mock-eyebrow">1487 Kestrel Lane · Whitfield</p>
+        <p class="mock-header">Quote</p>
+        <div class="mock-row"><span>Interior walls — prime + 2 coats</span><strong>$6,240</strong></div>
+        <div class="mock-row mock-hide-sm"><span>Accent wall (primary bdrm) — Emerald Urethane</span><strong>$1,180</strong></div>
+        <div class="mock-row mock-hide-md"><span>Trim &amp; baseboard, whole house</span><strong>$2,050</strong></div>
+        <div class="mock-row mock-hide-md"><span>Exterior trim &amp; soffit</span><strong>$5,000</strong></div>
+        <div class="mock-total"><span>Total</span><strong>$14,470</strong></div>
+        <div class="mock-cta">Book Estimate</div>
+      </div>
+      <div class="mock-tabbar">
+        <span class="mock-tab"><span class="mock-tab__label">Leads</span></span>
+        <span class="mock-tab"><span class="mock-tab__label">Properties</span></span>
+        <span class="mock-tab is-active"><span class="mock-tab__label">Quotes</span></span>
+        <span class="mock-tab"><span class="mock-tab__label">Settings</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="device device--tablet" aria-hidden="true">
+    <div class="device__screen">
+      <div class="device__panes">
+        <div class="device__pane device__pane--notes">
+          <p class="mock-eyebrow">Lead · Whitfield</p>
+          <p class="mock-header">Notes</p>
+          <p class="mock-note">Accent walls become their own quote line at their own paint profile — roughly a quarter of the wall field.</p>
+          <p class="mock-eyebrow">Open next</p>
+          <p class="mock-note">Photo capture per room · crew calendar &amp; day-sheets</p>
+        </div>
+        <div class="device__pane device__pane--main">
+          <p class="mock-header">Action Items</p>
+          <div class="mock-card">
+            <p class="mock-card__title">Whitfield quote is unsigned</p>
+            <p class="mock-card__meta">Sent 2 days ago · $14,470</p>
+          </div>
+          <div class="mock-card">
+            <p class="mock-card__title">Re-measure 1487 Kestrel Lane</p>
+            <p class="mock-card__meta">Kitchen wall removed — v3 needs the nook</p>
+          </div>
+          <div class="mock-hide-sm">
+            <p class="mock-header mock-header--spaced">This Week</p>
+            <div class="mock-schedule">
+              <span class="mock-date"><span class="mock-date__day">THU</span><span class="mock-date__num">27</span></span>
+              <div>
+                <p class="mock-card__title">Marcus &amp; Dana Whitfield</p>
+                <p class="mock-card__meta">9–11am · 1487 Kestrel Lane</p>
+              </div>
+            </div>
+            <div class="mock-schedule mock-hide-md">
+              <span class="mock-date"><span class="mock-date__day">FRI</span><span class="mock-date__num">28</span></span>
+              <div>
+                <p class="mock-card__title">The Lindqvists</p>
+                <p class="mock-card__meta">1–3pm · 88 Cedar Cross</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mock-tabbar">
+        <span class="mock-tab is-active"><span class="mock-tab__label">Leads</span><span class="mock-tab__badge">3</span></span>
+        <span class="mock-tab"><span class="mock-tab__label">Properties</span></span>
+        <span class="mock-tab"><span class="mock-tab__label">Quotes</span></span>
+        <span class="mock-tab"><span class="mock-tab__label">Settings</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="device device--iphone" aria-hidden="true">
+    <span class="device__cutout device__cutout--island"></span>
+    <div class="device__screen">
+      <div class="device__pane">
+        <p class="mock-header">Properties</p>
+        <div class="mock-card">
+          <p class="mock-card__title">1487 Kestrel Lane</p>
+          <p class="mock-card__meta">Whitfield · Interior + exterior</p>
+        </div>
+        <div class="mock-card mock-hide-sm">
+          <p class="mock-card__title">88 Cedar Cross</p>
+          <p class="mock-card__meta">The Lindqvists · Exterior</p>
+        </div>
+        <div class="mock-card mock-hide-md">
+          <p class="mock-card__title">412 Alder Ct</p>
+          <p class="mock-card__meta">Feld · 2 rooms</p>
+        </div>
+      </div>
+      <div class="mock-tabbar">
+        <span class="mock-tab"><span class="mock-tab__label">Leads</span></span>
+        <span class="mock-tab is-active"><span class="mock-tab__label">Properties</span></span>
+        <span class="mock-tab"><span class="mock-tab__label">Quotes</span></span>
+        <span class="mock-tab"><span class="mock-tab__label">Settings</span></span>
+      </div>
+    </div>
+  </div>
+
+</div>

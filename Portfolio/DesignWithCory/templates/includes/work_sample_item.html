@@ -1,16 +1,21 @@
 {# includes/work_sample_item.html — one Work Samples row. Included per-sample with `sample` and `index` in context. #}
-{% load static %}
 {% if sample.display_type == 'grandiose' %}
 <section class="work-sample work-sample--grandiose">
   <div class="work-sample__grandiose-inner">
     <span class="work-sample__eyebrow">{{ sample.summary }}</span>
     <h2>{{ sample.title }}</h2>
     <p>{{ sample.description }}</p>
-    {% if sample.image %}
+  </div>
+  {% if sample.title == 'EstiMate' %}
+    {% include "includes/estimate_device_showcase.html" %}
+  {% elif sample.image %}
+    <div class="work-sample__grandiose-inner">
       <div class="work-sample__grandiose-media">
-        <img src="{{ sample.image.url }}" alt="{{ sample.title }}">
+        <img src="{{ sample.image.url }}" alt="{{ sample.title }}" width="{{ sample.image.width }}" height="{{ sample.image.height }}" loading="lazy">
       </div>
-    {% endif %}
+    </div>
+  {% endif %}
+  <div class="work-sample__grandiose-inner">
     <div class="work-sample__links">
       {% if sample.live_url %}<a href="{{ sample.live_url }}" target="_blank" rel="noopener" class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius">View live</a>{% endif %}
       {% if sample.repo_url %}<a href="{{ sample.repo_url }}" target="_blank" rel="noopener" class="u-btn u-btn-round u-button-style u-active-black u-hover-black u-border-2 u-border-palette-1-base u-text-palette-1-base">View repository</a>{% endif %}
@@ -23,7 +28,7 @@
     {% if sample.display_type == 'iframe' and sample.embed_url %}
       <iframe src="{{ sample.embed_url }}" title="{{ sample.title }}" loading="lazy"></iframe>
     {% elif sample.image %}
-      <img src="{{ sample.image.url }}" alt="{{ sample.title }}">
+      <img src="{{ sample.image.url }}" alt="{{ sample.title }}" width="{{ sample.image.width }}" height="{{ sample.image.height }}" loading="lazy">
     {% endif %}
   </div>
   <div class="page-copy">

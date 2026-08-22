@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var successEl = form.querySelector('.u-form-send-success');
   var errorEl = form.querySelector('.u-form-send-error');
   var defaultErrorText = errorEl.textContent;
+  var defaultSubmitText = submitLink ? submitLink.textContent : '';
   var submitting = false;
 
   function submitForm() {
@@ -22,6 +23,13 @@ document.addEventListener('DOMContentLoaded', function () {
     submitting = true;
     successEl.style.display = 'none';
     errorEl.style.display = 'none';
+    // .u-btn-submit is an <a>, not a <button>/<input>, so it has no native `disabled` —
+    // aria-disabled + a CSS class (pages.css) covers both the visual and a11y side.
+    if (submitLink) {
+      submitLink.setAttribute('aria-disabled', 'true');
+      submitLink.classList.add('is-submitting');
+      submitLink.textContent = 'Sending…';
+    }
 
     fetch(form.action, {
       method: 'POST',
@@ -48,6 +56,11 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .finally(function () {
         submitting = false;
+        if (submitLink) {
+          submitLink.removeAttribute('aria-disabled');
+          submitLink.classList.remove('is-submitting');
+          submitLink.textContent = defaultSubmitText;
+        }
       });
   }
 
@@ -57,6 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
       function (event) {
         event.preventDefault();
         event.stopImmediatePropagation();
+        if (submitting) return; // aria-disabled isn't a real disabled — guard the click too
         submitForm();
       },
       true
