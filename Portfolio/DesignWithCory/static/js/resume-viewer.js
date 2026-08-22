@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', function () {
   var BASE_SCALE = 1.2;
   var scale = BASE_SCALE;
   var loaded = false;
+  var lastFocused = null;
+  // Every focusable control inside the dialog, in tab order — used for the focus trap below.
+  var focusable = [closeBtn, zoomOutBtn, zoomInBtn];
 
   function watermark(ctx, canvas) {
     ctx.save();
@@ -88,21 +91,44 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function openModal(event) {
     if (event) event.preventDefault();
+    lastFocused = document.activeElement;
     modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
     document.documentElement.classList.add('u-dialog-open-scroll');
+    closeBtn.focus();
     loadPdf();
   }
 
   function closeModal() {
     modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
     document.documentElement.classList.remove('u-dialog-open-scroll');
+    // Return focus to whatever opened the dialog (normally #resume-trigger) rather than
+    // leaving it on the now-hidden close button, or dropped back to <body>.
+    if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
   }
 
   trigger.addEventListener('click', openModal, true);
   closeBtn.addEventListener('click', closeModal);
   backdrop.addEventListener('click', closeModal);
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
+    if (!modal.classList.contains('is-open')) return;
+    if (e.key === 'Escape') {
+      closeModal();
+      return;
+    }
+    if (e.key !== 'Tab') return;
+    // Focus trap: Tab/Shift+Tab cycles only through the dialog's own controls so focus
+    // never escapes to the page behind the backdrop while the modal is open.
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
   });
   viewerEl.addEventListener('contextmenu', function (e) {
     e.preventDefault();

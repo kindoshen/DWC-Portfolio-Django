@@ -17,11 +17,18 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static as static_urls
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
 from django.urls import path, include
 from django.views.generic import RedirectView
 from django.templatetags.static import static
 
+from DesignWithCory.sitemaps import BlogPostSitemap, StaticViewSitemap
 from DesignWithCory.views import robots_txt
+
+sitemaps = {
+    "static": StaticViewSitemap,
+    "blog": BlogPostSitemap,
+}
 
 urlpatterns = [
     path('', include('DesignWithCory.urls')),
@@ -30,9 +37,11 @@ urlpatterns = [
     # Browsers probe /favicon.ico directly regardless of the <link rel="icon">
     # tags in base.html, so redirect it to the real file under STATIC_URL.
     path('favicon.ico', RedirectView.as_view(url=static('favicon/favicon.ico'), permanent=True)),
-    # robots.txt must be served at the literal domain root, not under
-    # STATIC_URL, so it gets its own view rather than living as a static file.
+    # robots.txt/sitemap.xml must be served at the literal domain root, not under
+    # STATIC_URL, so robots.txt gets its own view and sitemap.xml uses Django's
+    # built-in one — both driven by real URLs/content, not static placeholder files.
     path('robots.txt', robots_txt),
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
 ]
 
 if settings.DEBUG:
