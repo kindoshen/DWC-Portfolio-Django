@@ -14,11 +14,13 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import re
+
 from django.conf import settings
-from django.conf.urls.static import static as static_urls
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.views.generic import RedirectView
+from django.views.static import serve as serve_static
 from django.templatetags.static import static
 
 from DesignWithCory.views import robots_txt
@@ -35,6 +37,21 @@ urlpatterns = [
     path('robots.txt', robots_txt),
 ]
 
-if settings.DEBUG:
-    # Dev-only convenience; a real deployment serves MEDIA_ROOT some other way.
-    urlpatterns += static_urls(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+if settings.SERVE_MEDIA_VIA_DJANGO:
+    # Gated on a real setting rather than DEBUG: this used to be dev-only, which meant
+    # the Docker deployment served zero media (blog covers, work-sample images, the
+    # résumé) the moment DEBUG=False, since nothing else in this stack serves it either.
+    # Django serving media itself is slower than a dedicated web server/CDN under real
+    # load, but for this project's actual traffic that's a non-issue — see settings.py.
+    #
+    # Deliberately NOT django.conf.urls.static.static(): that helper has its own
+    # internal `if not settings.DEBUG: return []` check baked in, so it silently no-ops
+    # in production regardless of the setting above. re_path() straight to the
+    # underlying view (what static() just wraps) is what actually respects it.
+    urlpatterns += [
+        re_path(
+            r'^%s(?P<path>.*)$' % re.escape(settings.MEDIA_URL.lstrip('/')),
+            serve_static,
+            {'document_root': settings.MEDIA_ROOT},
+        ),
+    ]

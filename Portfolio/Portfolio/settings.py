@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 
+import dj_database_url
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -60,6 +62,13 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
+# Default is DENY, which — discovered by actually testing behind WhiteNoise/production
+# static serving rather than DEBUG's dev-server static handler, which bypasses this
+# middleware entirely — silently broke the Work Samples page's same-origin Pattern Atlas
+# iframe embed (static/lab/pattern-atlas.html framed by the page that ships it). This
+# site never frames anything cross-origin, so SAMEORIGIN is the correct, still-safe value.
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
 ROOT_URLCONF = 'Portfolio.urls'
 STATIC_ROOT = BASE_DIR / 'productionfiles'
 
@@ -87,11 +96,14 @@ WSGI_APPLICATION = 'Portfolio.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# DATABASE_URL (postgres://user:pass@host:port/dbname) drives this in Docker/production —
+# see docker-compose.yml. Left unset, local development still works unchanged against a
+# plain SQLite file, same as before Postgres support existed.
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+    )
 }
 
 
@@ -131,11 +143,16 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# User/admin-uploaded files: CRM notes/attachments, work-sample images, the
-# resume PDF. Served by Django itself in DEBUG (see urls.py); a real
-# deployment should front this with a proper storage backend.
+# User/admin-uploaded files: CRM notes/attachments, work-sample images, the resume PDF.
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Django serves MEDIA_ROOT itself by default (see urls.py) — not just in DEBUG. That's
+# the right tradeoff at this project's actual traffic level: simple, and it means the
+# Docker deployment doesn't need a second web server just for uploaded images. Set to
+# False and front /media/ with something else (nginx, a cloud storage backend via
+# django-storages, a CDN) if traffic ever justifies it.
+SERVE_MEDIA_VIA_DJANGO = os.environ.get('DJANGO_SERVE_MEDIA', 'True') == 'True'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

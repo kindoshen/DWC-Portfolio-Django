@@ -37,7 +37,10 @@ wheels/
 db.sqlite3
 db.sqlite3-journal
 media/
-staticfiles/
+# STATIC_ROOT (settings.py) is actually named productionfiles/, not staticfiles/ — that
+# mismatch meant this rule never matched anything, and the full collectstatic build
+# output (185 files, 1.5MB+ of vendored JS/CSS) ended up committed to source control.
+productionfiles/
 .webassets-cache
 
 # --- Environment & Dependencies ---
