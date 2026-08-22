@@ -13,20 +13,21 @@
                       {% csrf_token %}
                       <div class="u-form-group u-form-name u-label-top">
                         <label for="name-5a14" class="u-label">Name</label>
-                        <input type="text" placeholder="Enter your Name" id="name-5a14" name="name" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-1" required="">
+                        <input type="text" placeholder="Enter your Name" id="name-5a14" name="name" autocomplete="name" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-1" required="">
                       </div>
                       <div class="u-form-email u-form-group u-label-top">
                         <label for="email-5a14" class="u-label">Email</label>
-                        <input type="email" placeholder="Enter a valid email address" id="email-5a14" name="email" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-2" required="">
+                        <input type="email" placeholder="Enter a valid email address" id="email-5a14" name="email" autocomplete="email" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-2" required="">
                       </div>
                       <div class="u-form-group u-label-top">
                         <label for="phone-5a14" class="u-label">Phone</label>
-                        <input type="tel" placeholder="Enter your phone number" id="phone-5a14" name="phone" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-3" required="">
+                        <input type="tel" placeholder="Enter your phone number" id="phone-5a14" name="phone" autocomplete="tel" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-3" required="">
                       </div>
                       <div class="u-form-group u-label-top">
                         <label for="message-5a14" class="u-label">What are you looking to build?</label>
                         <textarea placeholder="A sentence or two is plenty" id="message-5a14" name="message" rows="3" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-4"></textarea>
                       </div>
+                      <noscript><p class="u-form-send-message" style="display: block;">Submitting this form requires JavaScript — please enable it, or reach out directly at <a href="mailto:Inquiry@DesignWithCory.com">Inquiry@DesignWithCory.com</a>.</p></noscript>
                       {# Honeypot — invisible to real visitors, irresistible to form-filling bots. #}
                       <div aria-hidden="true" style="position: absolute; left: -9999px; top: -9999px;">
                         <label for="website-5a14">Website</label>
