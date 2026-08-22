@@ -48,6 +48,9 @@ env/
 pip-log.txt
 pip-delete-this-directory.txt
 
+# --- Test coverage ---
+.coverage
+htmlcov/   
 # --- OS Artifacts ---
 .DS_Store
 Thumbs.db
