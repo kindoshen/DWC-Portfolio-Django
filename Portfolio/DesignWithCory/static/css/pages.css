@@ -472,7 +472,10 @@
   margin: 0 0 6px;
 }
 
-.mock-header {
+/* Now a <p> (was <h3> — decorative mock-UI chrome, not real document structure; see the
+   accessibility pass), so it needs the same .device__screen scoping as the other mock-*
+   <p> rules above to out-specificity .work-sample--grandiose p. */
+.device__screen .mock-header {
   font-family: "Alata", sans-serif;
   font-size: 0.8rem;
   color: var(--mock-text);
@@ -688,4 +691,11 @@
   .mock-hide-sm {
     display: none;
   }
+}
+
+/* Contact form submit button while a request is in flight — see contact-form.js. */
+.is-submitting {
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: default;
 }

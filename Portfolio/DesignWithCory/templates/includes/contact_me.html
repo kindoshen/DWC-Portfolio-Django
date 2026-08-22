@@ -13,25 +13,28 @@
                       {% csrf_token %}
                       <div class="u-form-group u-form-name u-label-top">
                         <label for="name-5a14" class="u-label">Name</label>
-                        <input type="text" placeholder="Enter your Name" id="name-5a14" name="name" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-1" required="">
+                        <input type="text" placeholder="Enter your Name" id="name-5a14" name="name" autocomplete="name" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-1" required="">
                       </div>
                       <div class="u-form-email u-form-group u-label-top">
                         <label for="email-5a14" class="u-label">Email</label>
-                        <input type="email" placeholder="Enter a valid email address" id="email-5a14" name="email" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-2" required="">
+                        <input type="email" placeholder="Enter a valid email address" id="email-5a14" name="email" autocomplete="email" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-2" required="">
                       </div>
                       <div class="u-form-group u-label-top">
                         <label for="phone-5a14" class="u-label">Phone</label>
-                        <input type="tel" placeholder="Enter your phone number" id="phone-5a14" name="phone" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-3" required="">
+                        <input type="tel" placeholder="Enter your phone number" id="phone-5a14" name="phone" autocomplete="tel" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-3" required="">
                       </div>
                       <div class="u-form-group u-label-top">
                         <label for="message-5a14" class="u-label">What are you looking to build?</label>
                         <textarea placeholder="A sentence or two is plenty" id="message-5a14" name="message" rows="3" class="u-border-2 u-border-grey-75 u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none u-input-4"></textarea>
                       </div>
+                      <noscript><p class="u-form-send-message" style="display: block;">Submitting this form requires JavaScript — please enable it, or reach out directly at <a href="mailto:Inquiry@DesignWithCory.com">Inquiry@DesignWithCory.com</a>.</p></noscript>
                       {# Honeypot — invisible to real visitors, irresistible to form-filling bots. #}
                       <div aria-hidden="true" style="position: absolute; left: -9999px; top: -9999px;">
                         <label for="website-5a14">Website</label>
                         <input type="text" id="website-5a14" name="website" tabindex="-1" autocomplete="off">
                       </div>
+                      {# Timing companion to the honeypot above — see ContactForm.clean_form_rendered_at. #}
+                      <input type="hidden" name="form_rendered_at" value="{% now 'U' %}">
                       <div class="u-align-right u-form-group u-form-submit u-label-top">
                         <a href="#" class="u-active-black u-border-none u-btn u-btn-round u-btn-submit u-button-style u-hover-black u-palette-1-base u-radius u-text-active-white u-text-body-alt-color u-text-hover-white u-btn-1">Submit</a>
                         <input type="submit" value="submit" class="u-form-control-hidden">
@@ -45,7 +48,7 @@
               </div>
               <div class="u-container-align-center-md u-container-align-center-sm u-container-align-center-xs u-container-style u-layout-cell u-size-30-lg u-size-30-xl u-size-60-md u-size-60-sm u-size-60-xs u-layout-cell-2" data-animation-name="customAnimationIn" data-animation-duration="1500" data-animation-delay="200" data-animation-direction="">
                 <div class="u-container-layout u-valign-middle u-container-layout-2">
-                  <img class="custom-expanded u-expanded-width-lg u-expanded-width-xl u-flip-horizontal u-image u-image-contain u-image-1" src="{% static 'images/ChatGPTImageAug112026at01_25_07AM.png' %}" data-image-width="1024" data-image-height="1536">
+                  <img class="custom-expanded u-expanded-width-lg u-expanded-width-xl u-flip-horizontal u-image u-image-contain u-image-1" src="{% static 'images/ChatGPTImageAug112026at01_25_07AM.png' %}" alt="Illustration of Cory ready to start a project" width="667" height="1000" loading="lazy">
                 </div>
               </div>
             </div>

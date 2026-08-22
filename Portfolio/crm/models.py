@@ -1,6 +1,9 @@
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
+from django.core.validators import MinValueValidator
 from django.db import models
+
+from DesignWithCory.validators import validate_document_upload_size
 
 
 class TimestampedModel(models.Model):
@@ -27,7 +30,10 @@ class Customer(TimestampedModel, Attachable):
     """A contact — the marketing/CRM record we keep regardless of whether a deal happens."""
 
     name = models.CharField(max_length=200)
-    email = models.EmailField()
+    # unique=True (which implies a DB index) closes a real race in the contact-form's
+    # get_or_create: without it, two near-simultaneous submissions from a brand-new
+    # address could both pass the SELECT and insert duplicate Customer rows.
+    email = models.EmailField(unique=True)
     phone = models.CharField(max_length=30)
     company = models.CharField(max_length=200, blank=True)
     marketing_opt_in = models.BooleanField(
@@ -118,7 +124,9 @@ class QuoteLineItem(models.Model):
     recurring_interval = models.CharField(
         max_length=20, choices=RecurringInterval.choices, default=RecurringInterval.ONE_TIME
     )
-    unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    unit_cost = models.DecimalField(
+        max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
+    )
     quantity = models.PositiveIntegerField(default=1)
 
     class Meta:
@@ -194,6 +202,7 @@ class Note(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [models.Index(fields=["content_type", "object_id"])]
 
     def __str__(self):
         return self.body[:60]
@@ -206,12 +215,15 @@ class Attachment(models.Model):
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey("content_type", "object_id")
 
-    file = models.FileField(upload_to="crm_attachments/%Y/%m/")
+    file = models.FileField(
+        upload_to="crm_attachments/%Y/%m/", validators=[validate_document_upload_size]
+    )
     caption = models.CharField(max_length=200, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-uploaded_at"]
+        indexes = [models.Index(fields=["content_type", "object_id"])]
 
     def __str__(self):
         return self.caption or self.file.name
