@@ -42,7 +42,12 @@ class BlogPost(models.Model):
 
 
 class Resume(models.Model):
-    """Singleton-ish: the current resume PDF, swappable via admin without a deploy."""
+    """The current resume PDF, swappable via admin without a deploy.
+
+    True singleton, not just "singleton by convention": saving a Resume deletes any
+    other rows, so there's never ambiguity in the admin about which one is live —
+    uploading a new one *replaces* the old rather than sitting alongside it.
+    """
 
     file = models.FileField(
         upload_to="resume/",
@@ -53,9 +58,13 @@ class Resume(models.Model):
     def __str__(self):
         return f"Resume (updated {self.updated_at:%Y-%m-%d})"
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        Resume.objects.exclude(pk=self.pk).delete()
+
     @classmethod
     def current(cls):
-        return cls.objects.order_by("-updated_at").first()
+        return cls.objects.first()
 
 
 class WorkSample(models.Model):
