@@ -18,7 +18,7 @@
 <div class="blog-grid">
   {% for post in posts %}
     <a href="{{ post.get_absolute_url }}" class="blog-card">
-      <img class="blog-card__image" src="{{ post.cover_image.url }}" alt="{{ post.title }}">
+      <img class="blog-card__image" src="{{ post.cover_image.url }}" alt="{{ post.title }}" loading="lazy">
       <div class="blog-card__body">
         <h2 class="blog-card__title">{{ post.title }}</h2>
         <div class="blog-card__excerpt-wrap">
