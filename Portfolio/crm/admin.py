@@ -68,6 +68,7 @@ class QuoteAdmin(admin.ModelAdmin):
     list_display = ("lead", "status", "valid_until", "created_at")
     list_filter = ("status",)
     search_fields = ("lead__customer__name",)
+    autocomplete_fields = ["lead"]
     inlines = [QuoteLineItemInline, NoteInline, AttachmentInline]
 
 
@@ -77,8 +78,25 @@ class ProjectAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = ("name", "customers__name")
     filter_horizontal = ("customers", "leads")
+    autocomplete_fields = ["originating_quote"]
     inlines = [ProjectMilestoneInline, NoteInline, AttachmentInline]
 
 
-admin.site.register(Note)
-admin.site.register(Attachment)
+@admin.register(Note)
+class NoteAdmin(admin.ModelAdmin):
+    """Notes are normally edited inline on their parent (Customer/Lead/Quote/Project), but
+    they're also reachable directly at /admin/crm/note/ — give that view real list/search
+    tooling instead of the bare, unstyled default."""
+
+    list_display = ("__str__", "content_type", "contact_method", "created_at")
+    list_filter = ("contact_method", "content_type")
+    search_fields = ("body",)
+    readonly_fields = ("created_at",)
+
+
+@admin.register(Attachment)
+class AttachmentAdmin(admin.ModelAdmin):
+    list_display = ("__str__", "content_type", "caption", "uploaded_at")
+    list_filter = ("content_type",)
+    search_fields = ("caption", "file")
+    readonly_fields = ("uploaded_at",)

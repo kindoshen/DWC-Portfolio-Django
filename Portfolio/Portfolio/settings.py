@@ -76,6 +76,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'DesignWithCory.context_processors.site_contact',
             ],
         },
     },
@@ -159,3 +160,10 @@ else:
 
 DEFAULT_FROM_EMAIL = os.environ.get('DJANGO_DEFAULT_FROM_EMAIL', 'Inquiry@DesignWithCory.com')
 CONTACT_NOTIFICATION_EMAIL = 'Inquiry@DesignWithCory.com'
+
+# The public-facing phone number — was hardcoded independently in both footer.html and
+# lead_gen.html; single source of truth now, injected into every template's context by
+# DesignWithCory.context_processors.site_contact. Kept as two forms since tel: links can't
+# contain the formatting punctuation the display text wants.
+SITE_PHONE_DISPLAY = '+1 (610) 413-6101'
+SITE_PHONE_TEL = '+16104136101'
