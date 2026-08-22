@@ -12,7 +12,7 @@
   {% elif sample.image %}
     <div class="work-sample__grandiose-inner">
       <div class="work-sample__grandiose-media">
-        <img src="{{ sample.image.url }}" alt="{{ sample.title }}">
+        <img src="{{ sample.image.url }}" alt="{{ sample.title }}" width="{{ sample.image.width }}" height="{{ sample.image.height }}" loading="lazy">
       </div>
     </div>
   {% endif %}
@@ -29,7 +29,7 @@
     {% if sample.display_type == 'iframe' and sample.embed_url %}
       <iframe src="{{ sample.embed_url }}" title="{{ sample.title }}" loading="lazy"></iframe>
     {% elif sample.image %}
-      <img src="{{ sample.image.url }}" alt="{{ sample.title }}">
+      <img src="{{ sample.image.url }}" alt="{{ sample.title }}" width="{{ sample.image.width }}" height="{{ sample.image.height }}" loading="lazy">
     {% endif %}
   </div>
   <div class="page-copy">
