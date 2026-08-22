@@ -32,6 +32,8 @@
                         <label for="website-5a14">Website</label>
                         <input type="text" id="website-5a14" name="website" tabindex="-1" autocomplete="off">
                       </div>
+                      {# Timing companion to the honeypot above — see ContactForm.clean_form_rendered_at. #}
+                      <input type="hidden" name="form_rendered_at" value="{% now 'U' %}">
                       <div class="u-align-right u-form-group u-form-submit u-label-top">
                         <a href="#" class="u-active-black u-border-none u-btn u-btn-round u-btn-submit u-button-style u-hover-black u-palette-1-base u-radius u-text-active-white u-text-body-alt-color u-text-hover-white u-btn-1">Submit</a>
                         <input type="submit" value="submit" class="u-form-control-hidden">
