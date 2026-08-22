@@ -1,27 +1,32 @@
 {# templates/includes/educational_materials.html — section partial, extracted from portfolio_index_pre_template.html #}
-{# Data-driven now: loops over the 3 latest BlogPost rows (passed as recent_posts by designWithCory view) #}
-{# instead of 3 hand-duplicated blocks that all pointed href="#". #}
+{# Data-driven: loops over the 3 latest BlogPost rows (passed as recent_posts by designWithCory view). #}
+{# Cards reuse blog_index.html's .blog-card component (pages.css) instead of Nicepage's original repeater, #}
+{# which positioned each item's text with hardcoded negative margins tuned to 3 specific fixed-length demo #}
+{# posts (see .u-section-8 .u-metadata-N/.u-text-N in index.css) — real post content of varying length broke #}
+{# that immediately. One card component shared between the teaser and the full index avoids re-breaking this. #}
 {% load static %}
 <section class="u-align-center u-clearfix u-container-align-center u-palette-1-light-3 u-section-8" id="block-10">
       <div class="u-clearfix u-sheet u-valign-middle u-sheet-1">
         <h2 class="u-align-center u-text u-text-default u-text-1"> Latest Tips &amp; Tricks</h2>
-        <div class="custom-expanded u-blog u-blog-1">
-          <div class="u-repeater u-repeater-1">
-            {% for post in recent_posts %}
-            <div class="u-blog-post u-container-align-left-sm u-container-align-left-xs u-radius u-repeater-item u-shape-round u-white u-repeater-item-{{ forloop.counter }}">
-              <div class="u-container-layout u-similar-container u-valign-middle-sm u-valign-middle-xs u-container-layout-{{ forloop.counter }}">
-                <img src="{{ post.cover_image.url }}" alt="{{ post.title }}" class="u-blog-control u-image u-image-round u-radius u-image-{{ forloop.counter }}" data-href="{{ post.get_absolute_url }}">
-                <div class="u-align-left-sm u-align-left-xs u-blog-control u-metadata u-metadata-{{ forloop.counter }}"><span class="u-meta-date u-meta-icon">{{ post.published_at|date:"M j, Y" }}</span>
+        <div class="blog-grid blog-grid--teaser">
+          {% for post in recent_posts %}
+            <a href="{{ post.get_absolute_url }}" class="blog-card">
+              <img class="blog-card__image" src="{{ post.cover_image.url }}" alt="{{ post.title }}">
+              <div class="blog-card__body">
+                <span class="blog-post__meta">{{ post.published_at|date:"M j, Y" }}</span>
+                <h2 class="blog-card__title">{{ post.title }}</h2>
+                <div class="blog-card__excerpt-wrap">
+                  <p class="blog-card__excerpt">{{ post.excerpt }}</p>
                 </div>
-                <h2 class="u-align-left u-blog-control u-text u-text-{{ forloop.counter }}">
-                  <a class="u-post-header-link" href="{{ post.get_absolute_url }}">{{ post.title|upper }}</a>
-                </h2>
-                <div class="u-align-left u-blog-control u-post-content u-text u-text-{{ forloop.counter }} fr-view">{{ post.excerpt }}</div>
-                <a href="{{ post.get_absolute_url }}" class="u-align-center-lg u-align-center-md u-align-center-xl u-align-left-sm u-align-left-xs u-blog-control u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius u-btn-{{ forloop.counter }}" data-animation-name="customAnimationIn" data-animation-duration="1500" data-animation-delay="500">Read More</a>
+                <span class="blog-card__read-more">Read more →</span>
               </div>
-            </div>
-            {% endfor %}
-          </div>
+            </a>
+          {% empty %}
+            <p class="page-copy">New posts are on the way — check back soon.</p>
+          {% endfor %}
+        </div>
+        <div class="tips-grid-cta">
+          <a href="{% url 'blog_index' %}" class="u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius">See all posts</a>
         </div>
       </div>
     </section>
