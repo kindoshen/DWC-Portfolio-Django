@@ -295,6 +295,19 @@
   text-wrap: balance;
 }
 
+/* Homepage "Latest Tips & Tricks" teaser: same .blog-card grid as the full
+   blog index, just trimmed to sit inside a Nicepage section instead of
+   owning the page (no bottom padding of its own; the "See all posts" CTA
+   below supplies that spacing instead). */
+.blog-grid--teaser {
+  padding: 40px 0 0;
+}
+
+.tips-grid-cta {
+  text-align: center;
+  margin: 8px 0 40px;
+}
+
 @media (max-width: 800px) {
   .page-hero h1 {
     font-size: 2rem;
