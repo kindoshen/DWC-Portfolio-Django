@@ -1,0 +1,26 @@
+Proprietary License
+
+Copyright (c) 2026 Cory Comly. All rights reserved.
+
+This repository and all of its contents — including but not limited to source code,
+templates, stylesheets, scripts, configuration, and documentation (collectively, the
+"Software") — are the proprietary property of Cory Comly.
+
+No license, express or implied, is granted to any person to use, copy, modify, merge,
+publish, distribute, sublicense, sell, or otherwise deal in the Software, in whole or in
+part, without the prior written permission of Cory Comly.
+
+The Software is NOT open source and is NOT available for sale or redistribution.
+
+Third-party components vendored or depended upon by this project (see README.md,
+"Third-Party Libraries") remain licensed under their own respective terms, which govern
+their use independently of this license.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+For licensing inquiries, contact Inquiry@DesignWithCory.com.

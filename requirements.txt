@@ -11,3 +11,4 @@ psycopg2-binary==2.9.12
 # Production WSGI server — see Dockerfile / docker-compose.yml. Not used by
 # `manage.py runserver` (dev only), so not load-bearing for local development.
 gunicorn==23.0.0
+django-ratelimit==4.1.0
