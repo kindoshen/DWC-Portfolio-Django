@@ -308,6 +308,301 @@
   margin: 8px 0 40px;
 }
 
+/* ---- EstiMate device showcase (bespoke, one-off — see includes/estimate_device_showcase.html) ---- */
+
+.device-showcase__quip {
+  font-family: "Alata", sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: 0.01em;
+  color: #a9bbf7;
+  text-align: center;
+  margin: 0 auto 48px;
+}
+
+.device-showcase {
+  --tablet-w: 460px;
+  --tablet-h: 345px;
+  --phone-w: 188px;
+  --phone-h: 388px;
+  --overlap: 34px;
+  --tilt: 9deg;
+  --bezel: 12px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin: 0 auto 56px;
+  padding: 10px 0 30px;
+}
+
+.device {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 30px;
+  background: linear-gradient(155deg, #2f2f34, #17171a);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 30px 70px rgba(0, 0, 0, 0.55);
+}
+
+.device__screen {
+  position: absolute;
+  inset: var(--bezel);
+  overflow: hidden;
+  border-radius: 16px;
+  background: #f6efe3;
+  display: flex;
+  flex-direction: column;
+}
+
+.device--tablet {
+  width: var(--tablet-w);
+  height: var(--tablet-h);
+  z-index: 2;
+}
+
+.device--android,
+.device--iphone {
+  width: var(--phone-w);
+  height: var(--phone-h);
+  z-index: 1;
+  margin-bottom: 22px;
+}
+
+.device--android .device__screen,
+.device--iphone .device__screen {
+  border-radius: 26px;
+}
+
+.device--android {
+  margin-right: calc(var(--overlap) * -1);
+  transform: rotate(calc(var(--tilt) * -1));
+}
+
+.device--iphone {
+  margin-left: calc(var(--overlap) * -1);
+  transform: rotate(var(--tilt));
+}
+
+.device__cutout {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #05050a;
+  z-index: 3;
+}
+
+.device__cutout--punch-hole {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.device__cutout--island {
+  top: 16px;
+  width: 64px;
+  height: 20px;
+  border-radius: 12px;
+}
+
+/* Shared "fake app UI" primitives used across all three EstiMate screens. */
+
+.device__panes {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.device__pane {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.device__pane--notes {
+  flex: 0 0 40%;
+  border-right: 1px solid #e6dcc8;
+}
+
+/* These four are <p> tags inside .device__screen, and .work-sample--grandiose p (above) already sets a
+   much larger font-size/color for the section's own copy — scope under .device__screen so the mock-UI
+   sizing wins on specificity instead of silently losing to that ancestor rule. */
+.device__screen .mock-eyebrow {
+  font-family: "Alata", sans-serif;
+  font-size: 0.5rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #a3947a;
+  margin: 0 0 6px;
+}
+
+.mock-header {
+  font-family: "Alata", sans-serif;
+  font-size: 0.8rem;
+  color: #2f2718;
+  margin: 0 0 8px;
+}
+
+.mock-header--spaced {
+  margin-top: 10px;
+}
+
+.device__screen .mock-note {
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.55rem;
+  line-height: 1.5;
+  color: #8a7c62;
+  margin: 0 0 12px;
+}
+
+.mock-card {
+  background: #fffaf2;
+  border: 1px solid #e6dcc8;
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin-bottom: 6px;
+}
+
+.device__screen .mock-card__title {
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #2f2718;
+  margin: 0 0 2px;
+}
+
+.device__screen .mock-card__meta {
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.5rem;
+  color: #8a7c62;
+  margin: 0;
+}
+
+.mock-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.52rem;
+  color: #4a4030;
+  margin-bottom: 6px;
+}
+
+.mock-row strong {
+  color: #2f2718;
+  flex-shrink: 0;
+}
+
+.mock-total {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #e6dcc8;
+  padding-top: 6px;
+  margin: 2px 0 10px;
+  font-family: "Alata", sans-serif;
+  font-size: 0.65rem;
+  color: #2f2718;
+}
+
+.mock-cta {
+  background: #c96a3a;
+  color: #ffffff;
+  text-align: center;
+  border-radius: 999px;
+  padding: 7px 0;
+  font-family: "Alata", sans-serif;
+  font-size: 0.55rem;
+  letter-spacing: 0.03em;
+  margin-top: auto;
+}
+
+.mock-schedule {
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+  margin-bottom: 7px;
+}
+
+.mock-date {
+  flex-shrink: 0;
+  background: #2f2718;
+  color: #f6efe3;
+  border-radius: 6px;
+  text-align: center;
+  padding: 3px 5px;
+  font-family: "Alata", sans-serif;
+  line-height: 1.15;
+}
+
+.mock-date > span {
+  display: block;
+}
+
+.mock-date__day {
+  font-size: 0.4rem;
+  letter-spacing: 0.05em;
+  opacity: 0.75;
+}
+
+.mock-date__num {
+  font-size: 0.6rem;
+}
+
+.mock-tabbar {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #e6dcc8;
+  padding: 7px 0;
+  background: #fffaf2;
+}
+
+.mock-tab {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  padding: 0 2px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.48rem;
+  color: #a3947a;
+}
+
+/* Truncates on its own so a long label can't overlap the next tab; kept separate from .mock-tab
+   (rather than overflow:hidden directly on it) so the badge below can still poke outside its tab. */
+.mock-tab__label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The phones' tab bar has ~40% less width per tab than the tablet's — drop a size so "Properties"/
+   "Settings" still read as words instead of ellipsizing even at full size. */
+.device--android .mock-tab,
+.device--iphone .mock-tab {
+  font-size: 0.4rem;
+}
+
+.mock-tab.is-active {
+  color: #c96a3a;
+  font-weight: 700;
+}
+
+.mock-tab__badge {
+  position: absolute;
+  top: -6px;
+  right: -9px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c96a3a;
+  color: #ffffff;
+  font-size: 0.38rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @media (max-width: 800px) {
   .page-hero h1 {
     font-size: 2rem;
@@ -319,5 +614,42 @@
   }
   .page-media-row img {
     max-width: 100%;
+  }
+  .device-showcase {
+    --tablet-w: 340px;
+    --tablet-h: 255px;
+    --phone-w: 132px;
+    --phone-h: 272px;
+    --overlap: 24px;
+    --bezel: 9px;
+  }
+  .device-showcase__quip {
+    font-size: 1.2rem;
+  }
+  /* Shorter frames at this size can't fit every line item without overflowing —
+     trim to what still reads as "a real screen" rather than let it clip mid-row. */
+  .mock-hide-md {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .device-showcase {
+    --tablet-w: 220px;
+    --tablet-h: 165px;
+    --phone-w: 84px;
+    --phone-h: 173px;
+    --overlap: 12px;
+    --tilt: 6deg;
+    --bezel: 6px;
+  }
+  .device__pane {
+    padding: 8px;
+  }
+  .device__pane--notes {
+    display: none;
+  }
+  .mock-hide-sm {
+    display: none;
   }
 }
