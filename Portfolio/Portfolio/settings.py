@@ -209,6 +209,12 @@ if os.environ.get('DJANGO_EMAIL_HOST'):
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+# Single source of truth for the phone number shown site-wide (DesignWithCory.
+# context_processors.site_contact) — was hardcoded independently in both footer.html and
+# lead_gen.html. TEL is the tel:-href-safe form (digits + leading +, no formatting).
+SITE_PHONE_DISPLAY = os.environ.get('DJANGO_SITE_PHONE_DISPLAY', '+1 (610) 413-6101')
+SITE_PHONE_TEL = os.environ.get('DJANGO_SITE_PHONE_TEL', '+16104136101')
+
 DEFAULT_FROM_EMAIL = os.environ.get('DJANGO_DEFAULT_FROM_EMAIL', 'Inquiry@DesignWithCory.com')
 # Where contact-form leads get emailed — defaults to DEFAULT_FROM_EMAIL rather than
 # repeating the address as a second hardcoded literal.

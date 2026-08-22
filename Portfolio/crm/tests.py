@@ -8,8 +8,9 @@ from decimal import Decimal
 
 from django.contrib.contenttypes.models import ContentType
 from django.core import mail
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from .forms import ContactForm
 from .models import (
@@ -35,6 +36,9 @@ class ContactFormTests(TestCase):
             "phone": "555-0100",
             "message": "Looking to build a booking app.",
             "website": "",
+            # Comfortably past MIN_SUBMIT_SECONDS (forms.py) so the timing anti-spam
+            # check doesn't flag a normal test submission as too-fast-to-be-human.
+            "form_rendered_at": str(int(timezone.now().timestamp()) - 10),
         }
         data.update(overrides)
         return data
@@ -82,8 +86,16 @@ class ContactFormTests(TestCase):
         self.assertIn("website", form.errors)
 
 
+@override_settings(RATELIMIT_ENABLE=False)
 class ContactSubmitViewTests(TestCase):
-    """The endpoint itself: what actually gets written to the DB and who gets emailed."""
+    """The endpoint itself: what actually gets written to the DB and who gets emailed.
+
+    Rate limiting (crm.views) is disabled here — several tests below submit multiple
+    real POSTs against the same view in quick succession (e.g. the returning-customer
+    tests), which would otherwise trip the 5/min-per-IP limit and fail on the rate
+    limit rather than on what each test actually means to check. django-ratelimit
+    respects this setting as its own documented way to no-op in tests.
+    """
 
     def setUp(self):
         self.url = reverse("contact_submit")
@@ -95,6 +107,9 @@ class ContactSubmitViewTests(TestCase):
             "phone": "555-0100",
             "message": "Looking to build a booking app.",
             "website": "",
+            # Comfortably past MIN_SUBMIT_SECONDS (forms.py) so the timing anti-spam
+            # check doesn't flag a normal test submission as too-fast-to-be-human.
+            "form_rendered_at": str(int(timezone.now().timestamp()) - 10),
         }
         data.update(overrides)
         return data

@@ -19,7 +19,7 @@ import re
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.views.generic import RedirectView
 from django.views.static import serve as serve_static
 from django.templatetags.static import static
