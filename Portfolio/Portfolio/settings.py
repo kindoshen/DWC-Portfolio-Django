@@ -125,11 +125,13 @@ WSGI_APPLICATION = 'Portfolio.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 # DATABASE_URL (postgres://user:pass@host:port/dbname) drives this in Docker/production —
-# see docker-compose.yml. Left unset, local development still works unchanged against a
-# plain SQLite file, same as before Postgres support existed.
+# see docker-compose.yml. Left unset (or blank, as it ships in .env.example), local
+# development still works unchanged against a plain SQLite file. dj_database_url.config()
+# only applies its default when the env var is absent, not when it's present-but-empty,
+# so an empty string is normalized away here before it reaches that call.
 DATABASES = {
-    'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+    'default': dj_database_url.parse(
+        os.environ.get('DATABASE_URL') or f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
     )
 }
