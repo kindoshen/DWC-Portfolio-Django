@@ -106,6 +106,7 @@
 
 .page-media-row img {
   width: 100%;
+  height: auto;
   max-width: 440px;
   border-radius: 24px;
   flex-shrink: 0;
@@ -147,6 +148,7 @@
 .work-sample__media img,
 .work-sample__media iframe {
   width: 100%;
+  height: auto;
   border-radius: 24px;
   display: block;
   border: 1px solid var(--color-border);
@@ -205,6 +207,7 @@
 
 .work-sample__grandiose-media img {
   width: 100%;
+  height: auto;
   display: block;
 }
 
@@ -216,7 +219,11 @@
 
 .blog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  /* Card min-width scales fluidly with viewport (25vw) between a 260px floor (so cards
+     don't get silly-narrow on small screens) and a 345px ceiling — 15% wider than the
+     300px this replaced (300 * 1.15). auto-fill + 1fr still drive the actual column
+     count/growth, same responsive mechanism as before. */
+  grid-template-columns: repeat(auto-fill, minmax(clamp(260px, 25vw, 345px), 1fr));
   gap: 32px;
   max-width: 1140px;
   margin: 0 auto;
@@ -243,7 +250,7 @@
 
 .blog-card__image {
   width: 100%;
-  height: 200px;
+  height: 140px; /* 30% shorter than the 200px this replaced */
   object-fit: cover;
   display: block;
   background-color: var(--color-cover-placeholder);
@@ -258,14 +265,15 @@
 
 .blog-card__title {
   font-family: "Alata", sans-serif;
-  font-size: 1.25rem;
+  font-size: 1.05rem; /* just above .blog-card__excerpt's 0.95rem, not a full step up */
+  font-weight: 700;
   color: var(--color-text);
   margin: 0 0 12px;
 }
 
 .blog-card__excerpt-wrap {
   position: relative;
-  max-height: 4.8em;
+  max-height: 3.4em; /* 30% shorter than the 4.8em this replaced */
   overflow: hidden;
   flex: 1;
 }
@@ -276,7 +284,7 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 2.4em;
+  height: 1.7em; /* same 50%-of-wrap ratio as before, scaled down with it */
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0), var(--color-white) 85%);
 }
 
