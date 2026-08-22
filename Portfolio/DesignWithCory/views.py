@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404, render
 
 # Create your views here.
 from django.http import FileResponse, Http404, HttpResponse
+from django.urls import reverse
 
 from .models import BlogPost, Resume, WorkSample
 
@@ -39,13 +40,17 @@ def resume_pdf(request):
   return response
 
 def robots_txt(request):
-  # Allow indexing of every public page (SEO), but keep the admin, uploaded
-  # CRM/media files, and the resume viewer out of search results and caches.
+  # Allow indexing of every public page (SEO) — including blog/work-sample images
+  # under /media/, which a blanket "Disallow: /media/" used to hide from image
+  # search along with everything else in that directory. Only the resume itself
+  # (and the admin, and the watermarked-canvas viewer's own route) stay out.
   lines = [
     "User-agent: *",
     "Allow: /",
     "Disallow: /admin/",
-    "Disallow: /media/",
+    "Disallow: /media/resume/",
     "Disallow: /resume/",
+    "",
+    f"Sitemap: {request.build_absolute_uri(reverse('django.contrib.sitemaps.views.sitemap'))}",
   ]
   return HttpResponse("\n".join(lines), content_type="text/plain")
