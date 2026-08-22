@@ -1,7 +1,14 @@
 {# templates/landing.html — home page: base shell + every section partial, in source order. #}
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Home{% endblock %}
+
+{% block meta_description %}Senior software engineer Cory Comly builds secure, scalable web and mobile applications — full-stack development, API architecture, and security auditing for startups and growing teams.{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/resume-viewer.css' %}">
+{% endblock %}
 
 {% block content %}
     {% include "includes/hero.html" %}
@@ -13,4 +20,8 @@
     {% include "includes/project_showcase.html" %}
     {% include "includes/educational_materials.html" %}
     {% include "includes/contact_me.html" %}
+{% endblock %}
+
+{% block extra_js %}
+    <script type="module" src="{% static 'js/resume-viewer.js' %}"></script>
 {% endblock %}

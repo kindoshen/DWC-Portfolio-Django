@@ -14,10 +14,27 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf import settings
+from django.conf.urls.static import static as static_urls
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import RedirectView
+from django.templatetags.static import static
+
+from DesignWithCory.views import robots_txt
 
 urlpatterns = [
     path('', include('DesignWithCory.urls')),
+    path('contact/', include('crm.urls')),
     path('admin/', admin.site.urls),
+    # Browsers probe /favicon.ico directly regardless of the <link rel="icon">
+    # tags in base.html, so redirect it to the real file under STATIC_URL.
+    path('favicon.ico', RedirectView.as_view(url=static('favicon/favicon.ico'), permanent=True)),
+    # robots.txt must be served at the literal domain root, not under
+    # STATIC_URL, so it gets its own view rather than living as a static file.
+    path('robots.txt', robots_txt),
 ]
+
+if settings.DEBUG:
+    # Dev-only convenience; a real deployment serves MEDIA_ROOT some other way.
+    urlpatterns += static_urls(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,34 @@
+{# templates/blog_index.html — Blog index: container for all posts, card grid. #}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Blog{% endblock %}
+{% block meta_description %}Notes on software engineering, security, and building things that actually work — from Cory Comly.{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/pages.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <h1>Latest Tips &amp; Tricks</h1>
+  <p>Notes on building, breaking, and shipping — written up when there's something worth saying.</p>
+</section>
+
+<div class="blog-grid">
+  {% for post in posts %}
+    <a href="{{ post.get_absolute_url }}" class="blog-card">
+      <img class="blog-card__image" src="{{ post.cover_image.url }}" alt="{{ post.title }}">
+      <div class="blog-card__body">
+        <h2 class="blog-card__title">{{ post.title }}</h2>
+        <div class="blog-card__excerpt-wrap">
+          <p class="blog-card__excerpt">{{ post.excerpt }}</p>
+        </div>
+        <span class="blog-card__read-more">Read more →</span>
+      </div>
+    </a>
+  {% empty %}
+    <p>New posts are on the way — check back soon.</p>
+  {% endfor %}
+</div>
+{% endblock %}

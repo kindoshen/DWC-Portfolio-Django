@@ -1,13 +1,17 @@
-{# templates/base.html — site shell. Django 4.2 Jinja2 backend (django.template.backends.jinja2.Jinja2). #}
+{# templates/base.html — site shell. Django 4.2, django.template.backends.django.DjangoTemplates. #}
 {% load static %}
 <!DOCTYPE html>
 <html style="font-size: 16px;" lang="{% block html_lang %}en{% endblock %}">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="utf-8">
-    <meta name="keywords" content="​I’m&nbsp;Matt, ​Hi, I’m Matt. Nice to meet you., ​My Quality Services, ​My Works Skills, ​Let&amp;apos;s Work Together. Fixed A Meeting, ​Here are some of my clients, ​My Special Skills, ​My Works, ​Latest Tips &amp;amp; Tricks, Clients, Creativity, and Coffee, The Art of Branding, From Sketch to Screen, ​Get in Touch">
-    <meta name="description" content="{% block meta_description %}{% endblock %}">
-    <title>{% block title %}Home{% endblock %}</title>
+    <meta name="keywords" content="​Cory Comly, ​Hi, I’m Cory. Nice to meet you., ​Software Engineering Services, ​My Work Samples, ​Let&amp;apos;s Work Together. Get a Quote, ​Here are some of my clients, ​My Special Skills, ​My Works, ​Latest Tips &amp;amp; Tricks, Clients, Creativity, and Coffee, The Art of Branding, From Sketch to Screen, ​Get in Touch">
+    <meta name="description" content="{% block meta_description %}Cory Comly is a senior software engineer, blockchain consultant, and security analyst with 12+ years of experience building secure, scalable web and mobile products.{% endblock %}">
+    <title>{% block title %}Home{% endblock %} | Design With Cory</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}">
     <link rel="stylesheet" href="{% static 'css/nicepage.css' %}" media="screen">
 <link rel="stylesheet" href="{% static 'css/index.css' %}" media="screen">
     <script class="u-script" type="text/javascript" src="{% static 'js/jquery.js' %}" defer=""></script>
@@ -20,19 +24,28 @@
 		"name": "DesignWithCory",
 		"logo": "{% static 'images/ChatGPTImageAug112026at01_52_09AM.png' %}",
 		"sameAs": [
-				"https://facebook.com/name",
-				"https://twitter.com/name",
-				"https://instagram.com/name"
+				"https://facebook.com/cory.comly",
+				"https://twitter.com/kindoshen",
+				"https://instagram.com/cory.comly",
+				"https://linkedin.com/in/cory-comly",
+				"https://github.com/kindoshen"
 		]
 }</script>
     <meta name="theme-color" content="#7190f0">
-    <meta name="twitter:site" content="@">
+    <meta name="twitter:site" content="@kindoshen">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Home">
-    <meta name="twitter:description" content="">
-    <meta property="og:title" content="Home">
+    {# Django only allows a given block name once per template, so twitter:*/og:* share static fallback copy — #}
+    {# override og_title/og_description (alongside title/meta_description) on a page for a distinct share-card. #}
+    <meta name="twitter:title" content="Design With Cory — Senior Software Engineer">
+    <meta name="twitter:description" content="Cory Comly is a senior software engineer, blockchain consultant, and security analyst with 12+ years of experience building secure, scalable web and mobile products.">
+    <meta name="twitter:image" content="{% static 'images/ChatGPTImageAug112026at01_52_09AM.png' %}">
+    <meta property="og:title" content="{% block og_title %}Design With Cory — Senior Software Engineer{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Cory Comly is a senior software engineer, blockchain consultant, and security analyst with 12+ years of experience building secure, scalable web and mobile products.{% endblock %}">
+    <meta property="og:image" content="{% static 'images/ChatGPTImageAug112026at01_52_09AM.png' %}">
     <meta property="og:type" content="website">
-  <meta name="referrer" content="origin"><meta data-intl-tel-input-cdn-path="{% static 'intlTelInput/' %}"></head>
+  <meta name="referrer" content="origin"><meta data-intl-tel-input-cdn-path="{% static 'intlTelInput/' %}">
+    {% block extra_css %}{% endblock %}
+</head>
 <body data-home-page="{% url 'designWithCory' %}" data-home-page-title="Home" data-path-to-root="{% static '' %}" data-include-products="false" class="u-body u-clearfix u-xl-mode{% block body_class %}{% endblock %}" data-lang="en">
 {% block header %}{% include "includes/header.html" %}{% endblock %}
 
