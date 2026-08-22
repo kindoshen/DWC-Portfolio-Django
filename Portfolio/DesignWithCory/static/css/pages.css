@@ -678,6 +678,37 @@
   .mock-hide-md {
     display: none;
   }
+
+  /* Homepage "Latest Tips & Tricks" teaser only (.blog-grid--teaser, not the full /blog/
+     index's plain .blog-grid, which stays a normal wrapping grid at every size — it's meant
+     to be browsed, not swiped through). Below this width there's only room for one column
+     anyway, so the vertical stack was really just a tall single-file list; a horizontally
+     swipeable, snap-scrolling row gets you through all of them without that much scrolling,
+     and reads more clearly as "there are more of these" than a stack does. */
+  .blog-grid--teaser {
+    display: flex;
+    /* Explicit, not auto: percentage flex-basis on the cards below needs this container's
+       own width resolved up front. Left as auto, an overflow-x:auto flex container with
+       percentage-basis children hits a circular sizing case in some browsers — the
+       container inflates to fit its (now-unclamped) children instead of the other way
+       around. Confirmed empirically: cards were measuring against an ~800px container
+       inside a 375px viewport before this was added. */
+    width: 100%;
+    box-sizing: border-box;
+    grid-template-columns: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 24px;
+    -webkit-overflow-scrolling: touch;
+    gap: 20px;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .blog-grid--teaser .blog-card {
+    scroll-snap-align: start;
+    flex: 0 0 78%;
+    min-width: 240px;
+  }
 }
 
 @media (max-width: 480px) {
