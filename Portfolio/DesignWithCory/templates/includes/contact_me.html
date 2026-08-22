@@ -33,6 +33,8 @@
                         <label for="website-5a14">Website</label>
                         <input type="text" id="website-5a14" name="website" tabindex="-1" autocomplete="off">
                       </div>
+                      {# Timing companion to the honeypot above — see ContactForm.clean_form_rendered_at. #}
+                      <input type="hidden" name="form_rendered_at" value="{% now 'U' %}">
                       <div class="u-align-right u-form-group u-form-submit u-label-top">
                         <a href="#" class="u-active-black u-border-none u-btn u-btn-round u-btn-submit u-button-style u-hover-black u-palette-1-base u-radius u-text-active-white u-text-body-alt-color u-text-hover-white u-btn-1">Submit</a>
                         <input type="submit" value="submit" class="u-form-control-hidden">
@@ -46,7 +48,7 @@
               </div>
               <div class="u-container-align-center-md u-container-align-center-sm u-container-align-center-xs u-container-style u-layout-cell u-size-30-lg u-size-30-xl u-size-60-md u-size-60-sm u-size-60-xs u-layout-cell-2" data-animation-name="customAnimationIn" data-animation-duration="1500" data-animation-delay="200" data-animation-direction="">
                 <div class="u-container-layout u-valign-middle u-container-layout-2">
-                  <img class="custom-expanded u-expanded-width-lg u-expanded-width-xl u-flip-horizontal u-image u-image-contain u-image-1" src="{% static 'images/ChatGPTImageAug112026at01_25_07AM.png' %}" data-image-width="1024" data-image-height="1536">
+                  <img class="custom-expanded u-expanded-width-lg u-expanded-width-xl u-flip-horizontal u-image u-image-contain u-image-1" src="{% static 'images/ChatGPTImageAug112026at01_25_07AM.png' %}" alt="Illustration of Cory ready to start a project" width="667" height="1000" loading="lazy">
                 </div>
               </div>
             </div>

@@ -4,11 +4,17 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django_ratelimit.decorators import ratelimit
 
 from .forms import ContactForm
 from .models import Customer, Lead
 
+# Bot-detection fields that never get a visible error of their own — surfacing one would
+# tell an attacker exactly which check they tripped.
+_SILENT_FIELDS = ("website", "form_rendered_at")
 
+
+@ratelimit(key="ip", rate="5/m", method="POST", block=False)
 @require_POST
 def contact_submit(request):
     """Public contact form endpoint: creates (or reuses) a Customer + a new Lead.
@@ -16,11 +22,14 @@ def contact_submit(request):
     Every lead gets an associated customer, per the CRM spec — repeat visitors
     are matched by email rather than creating a duplicate Customer each time.
     """
+    if getattr(request, "limited", False):
+        return JsonResponse(
+            {"error": "Too many requests — please try again in a minute."}, status=429
+        )
+
     form = ContactForm(request.POST)
     if not form.is_valid():
-        # Surface the first real (non-honeypot) field error, if any, else a
-        # generic message — the honeypot itself never gets a visible error.
-        errors = {k: v for k, v in form.errors.items() if k != "website"}
+        errors = {k: v for k, v in form.errors.items() if k not in _SILENT_FIELDS}
         message = next(iter(errors.values()))[0] if errors else "Please check your details and try again."
         return JsonResponse({"error": message}, status=400)
 

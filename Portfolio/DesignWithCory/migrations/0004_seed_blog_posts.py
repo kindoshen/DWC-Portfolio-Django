@@ -68,7 +68,7 @@ POSTS = [
     {
         "title": "The Art of Branding (From an Engineer Who Isn't a Designer)",
         "slug": "the-art-of-branding",
-        "cover_image": "blog/the-art-of-branding-cover.png",
+        "cover_image": "blog/the-art-of-branding-cover.jpg",
         "excerpt": (
             "A logo isn't a brand — and neither is a design system, honestly. Here's how I think "
             "about brand consistency from the code side, where most of it actually gets enforced "

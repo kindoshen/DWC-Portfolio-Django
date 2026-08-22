@@ -20,19 +20,45 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-# Falls back to the original dev-only key so local runs need no setup;
-# set DJANGO_SECRET_KEY before this ever serves real traffic.
-SECRET_KEY = os.environ.get(
-    'DJANGO_SECRET_KEY',
-    'django-insecure-7l0)lqyw3nl+qv6g-n$j&a1hd5dya^*1i0=tl@km20fcs@c)h=',
-)
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+# Defaults to False (fails safe) — local dev must opt in explicitly rather than
+# a forgotten env var silently leaving a production deploy in debug mode.
+# Run locally with DJANGO_DEBUG=True (see README) to get tracebacks + the dev key below.
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+
+# SECURITY WARNING: keep the secret key used in production secret!
+# The insecure fallback only applies in DEBUG; production (DEBUG=False) must set
+# DJANGO_SECRET_KEY or fail to start rather than silently serving on a key that's
+# been public in this repo's git history since day one.
+if DEBUG:
+    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-local-dev-only-key')
+else:
+    SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 
 ALLOWED_HOSTS = [
     h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if h.strip()
+]
+
+# HTTPS/proxy/cookie hardening — gated on DEBUG so a bare local `runserver` (no TLS)
+# isn't broken by an SSL redirect or Secure-flagged cookies it can never satisfy.
+if not DEBUG:
+    SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SECURE_SSL_REDIRECT', 'True') == 'True'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_HSTS_SECONDS', '31536000'))  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    # Set when running behind a TLS-terminating proxy/load balancer (the common case for
+    # most hosts) so Django trusts X-Forwarded-Proto instead of seeing every request as
+    # plain HTTP and redirect-looping. Set DJANGO_BEHIND_PROXY=False if TLS terminates
+    # in the app process itself.
+    if os.environ.get('DJANGO_BEHIND_PROXY', 'True') == 'True':
+        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Needed once this is served from a real domain behind HTTPS — Django's CSRF check
+# compares the Origin header against this list for unsafe (POST/PUT/etc.) requests.
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()
 ]
 
 
@@ -45,25 +71,26 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sitemaps',
     'DesignWithCory',
     'crm',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Immediately after SecurityMiddleware per WhiteNoise's own placement guidance, so
+    # static files are served as early in the chain as possible.
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'Portfolio.urls'
 STATIC_ROOT = BASE_DIR / 'productionfiles'
-
-STATIC_URL = 'static/'
 
 TEMPLATES = [
     {
@@ -137,6 +164,14 @@ STATIC_URL = 'static/'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Every upload in this project goes through the admin (there's no public upload
+# endpoint), but a generous outer ceiling still guards against a request tying up a
+# worker or filling disk. Deliberately set above the largest per-field limit in
+# DesignWithCory/validators.py (15MB) so it's a safety net, not the real limit —
+# the model validators are what actually enforce sane, field-specific sizes.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024  # 20MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -158,4 +193,14 @@ else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 DEFAULT_FROM_EMAIL = os.environ.get('DJANGO_DEFAULT_FROM_EMAIL', 'Inquiry@DesignWithCory.com')
-CONTACT_NOTIFICATION_EMAIL = 'Inquiry@DesignWithCory.com'
+# Where contact-form leads get emailed — defaults to DEFAULT_FROM_EMAIL rather than
+# repeating the address as a second hardcoded literal.
+CONTACT_NOTIFICATION_EMAIL = os.environ.get(
+    'DJANGO_CONTACT_NOTIFICATION_EMAIL', DEFAULT_FROM_EMAIL
+)
+
+# If set, Django emails a full traceback here on any unhandled 500 (only takes effect
+# with DEBUG=False, and only actually sends if EMAIL_BACKEND above is real SMTP).
+_admin_email = os.environ.get('DJANGO_ADMIN_EMAIL')
+ADMINS = [('Cory Comly', _admin_email)] if _admin_email else []
+SERVER_EMAIL = os.environ.get('DJANGO_SERVER_EMAIL', DEFAULT_FROM_EMAIL)
