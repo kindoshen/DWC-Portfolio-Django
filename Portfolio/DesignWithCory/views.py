@@ -19,6 +19,61 @@ def about(request):
 def work_samples(request):
   return render(request, 'work_samples.html', {'work_samples': WorkSample.objects.all()})
 
+# A small, curated set of transparent-background assets — the site's own brand mark plus a
+# handful of logo-concept explorations that were already sitting in static/images/ unused.
+# Fixed content, not admin-editable, so a plain list here beats a model + migration for what
+# is genuinely just this one gallery page.
+CREATIONS = [
+  {
+    "image": "images/ChatGPTImageAug112026at01_52_09AM.png",
+    "title": "DesignWithCory",
+    "caption": "The brand mark this whole site is built around.",
+  },
+  {
+    "image": "images/ChatGPTImageAug112026at01_25_07AM.png",
+    "title": "Brand character",
+    "caption": "The illustrated version of me that shows up across the site.",
+  },
+  {
+    "image": "images/image1.png",
+    "title": "Junxion",
+    "caption": "Logo concept — gradient mark for a fictional connectivity brand.",
+  },
+  {
+    "image": "images/black-logo-1.png",
+    "title": "Concept 01",
+    "caption": "Logo concept — an open-book mark for a fictional company.",
+  },
+  {
+    "image": "images/black-logo-2_150.png",
+    "title": "Concept 02",
+    "caption": "Logo concept — a checkmark built from repeated strokes.",
+  },
+  {
+    "image": "images/black-logo-3.png",
+    "title": "Concept 03",
+    "caption": "Logo concept — two interlocking rings.",
+  },
+  {
+    "image": "images/black-logo-4.png",
+    "title": "Concept 04",
+    "caption": "Logo concept — an abstract monogram built from right angles.",
+  },
+  {
+    "image": "images/black-logo-5.png",
+    "title": "Concept 05",
+    "caption": "Logo concept — a stepped, parallel-stroke mark.",
+  },
+  {
+    "image": "images/black-logo-6.png",
+    "title": "Concept 06",
+    "caption": "Logo concept — angled twin blocks.",
+  },
+]
+
+def creations(request):
+  return render(request, 'creations.html', {'creations': CREATIONS})
+
 def blog_index(request):
   posts = BlogPost.objects.filter(is_published=True)
   return render(request, 'blog_index.html', {'posts': posts})

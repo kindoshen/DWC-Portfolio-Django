@@ -17,12 +17,14 @@
                   </h2>
                   <p class="u-align-left u-text u-text-3"><span style="font-weight: 700;">Helium</span> has managed to give the world a decentralized, people-powered, Omni-network protocol. Yet, its most loyal supporters - the HNT miners and holders - must still <span style="font-weight: 700; text-decoration: underline;">rely on centralized exchanges</span> for exchanging their earnings and buying tokens to participate. We proposed building a bridge that allowed users to convert their HNT for Wrapped HNT (wHNT). By bridging HNT onto EVM compatible blockchains (such as Solidity), we can expose HNT to the broader market, allowing users to buy, sell and earn a yield on their tokens in a decentralized way. Expanding HNT’s reach to the larger Defi market will give users a better choice on what to do with their HNT and greater control over their digital assets.
                   </p>
-                  {# No data-animation-* here: u-layout-cell-2 above already animates this whole
+                  {% comment %}
+                     No data-animation-* here: u-layout-cell-2 above already animates this whole
                      column in as one unit (same customAnimationIn/500ms). A second, independent
                      animation on just this button re-triggered its own fade-in nested inside the
                      parent's — visibly animating in late, after the rest of the section (heading,
                      paragraph) had already settled, since it re-ran its own scroll-trigger check
-                     instead of just inheriting the parent's already-applied state. #}
+                     instead of just inheriting the parent's already-applied state.
+                  {% endcomment %}
                   <a href="{% url 'work_samples' %}" class="u-align-center u-btn u-btn-round u-button-style u-hover-palette-1-light-1 u-palette-1-base u-radius u-btn-1">See the full case study&nbsp;<span class="u-file-icon u-icon u-text-white u-icon-1"><img src="{% static 'images/545682-1ca20afc.png' %}" alt="" width="128" height="128"></span>
                   </a>
                 </div>

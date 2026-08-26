@@ -1,0 +1,284 @@
+/* creations.css — the Creations page: a thumbnail grid, plus the two-layer modal (real image
+   preview + the joke "why the X doesn't work" bubble). See static/js/creations.js for the
+   interaction logic this markup/CSS supports. */
+
+/* ---- Grid ---- */
+
+.creations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 24px;
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 48px 24px 96px;
+}
+
+.creations-grid__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 16px;
+  background: var(--color-bg-light);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.creations-grid__item:hover,
+.creations-grid__item:focus-visible {
+  box-shadow: 0 16px 32px rgba(17, 17, 17, 0.1);
+  transform: translateY(-2px);
+}
+
+.creations-grid__item img {
+  max-width: 100%;
+  height: 120px;
+  object-fit: contain;
+}
+
+.creations-grid__label {
+  font-family: "Alata", sans-serif;
+  font-size: 0.9rem;
+  color: var(--color-text-muted-2);
+}
+
+/* ---- Modal shell ---- */
+
+.creations-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.creations-modal.is-open {
+  display: flex;
+}
+
+.creations-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 14, 0.88);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* The polite "closing this for you" line — centered over the backdrop, shown briefly on the
+   way out (see creations.js) rather than an instant cut, so the joke reads as an actual
+   action rather than a static label. */
+.creations-modal__toast {
+  position: relative;
+  z-index: 2;
+  font-family: "Alata", sans-serif;
+  font-size: 1.15rem;
+  color: #ffffff;
+  text-align: center;
+  margin: 0;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+
+.creations-modal.is-closing .creations-modal__toast {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.creations-modal.is-closing .creations-modal__stage {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+/* Deliberately no background/border/shadow anywhere in this chain — the brief was "no clear
+   border container", the image (and its caption) just float on the shaded backdrop. These
+   boxes only exist to center/position things and, for .creations-modal__frame specifically,
+   to shrink-wrap tightly to the image's own rendered size so the close button anchors to its
+   actual corner instead of a guessed fixed position (images here range from a square logo to
+   a 2:3 portrait — a fixed offset would only ever be right for one of them). */
+.creations-modal__stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.creations-modal__frame {
+  position: relative;
+  display: inline-flex;
+  pointer-events: auto;
+  max-width: 33vw;
+  max-height: 76vh;
+}
+
+.creations-modal__image {
+  /* "No more than the middle 33% of the screen" / "~85% of viewport height" per spec — the
+     85vh envelope is split between the image and the caption below it. */
+  max-width: 33vw;
+  max-height: 76vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.creations-modal__caption {
+  max-width: 33vw;
+  margin: 0;
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.75);
+  text-align: center;
+  pointer-events: none;
+}
+
+/* 33vw is the right constraint on a real screen, but on a phone it makes the artwork close to
+   illegible — relaxing the cap here is a deliberate, disclosed exception to that rule, not an
+   oversight (see the PR description). */
+@media (max-width: 700px) {
+  .creations-modal__frame,
+  .creations-modal__image,
+  .creations-modal__caption {
+    max-width: 80vw;
+  }
+}
+
+/* ---- Close button + the joke exit bubble ---- */
+
+.creations-modal__close-anchor {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(50%, -50%);
+}
+
+.creations-modal__close {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: #ffffff;
+  color: var(--color-text);
+  font-size: 1.5rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.creations-modal__close:hover,
+.creations-modal__close:focus-visible {
+  background: var(--color-bg-light);
+}
+
+/* The bubble opens down and to the left of the X: anchored by its top-right corner (top:
+   100% of the X, right: 0 — flush with the X's right edge), and since the bubble is wider
+   than the X, it naturally extends further left as it grows. */
+/* .creations-exit-bubble's own `display: flex` below is an author-stylesheet rule, which
+   beats the browser's default `[hidden] { display: none }` UA rule regardless of source order
+   (author origin always wins over user-agent origin) — without an explicit override, the
+   bubble ignored its `hidden` attribute entirely and showed immediately on open. The extra
+   [hidden] attribute selector here gives this rule higher specificity than the plain-class
+   rule below, so it wins within our own stylesheet too. */
+.creations-exit-bubble[hidden] {
+  display: none;
+}
+
+.creations-exit-bubble {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  width: min(420px, 82vw);
+  max-height: min(60vh, 520px);
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.creations-exit-bubble__tail {
+  position: absolute;
+  top: -9px;
+  right: 14px;
+  width: 18px;
+  height: 18px;
+  background: #ffffff;
+  transform: rotate(45deg);
+  border-radius: 3px;
+}
+
+.creations-exit-bubble__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 12px;
+  font-family: "Alata", sans-serif;
+  font-weight: 700;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.creations-exit-bubble__dismiss {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-bg-light);
+  color: var(--color-text-muted-2);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.creations-exit-bubble__dismiss:hover,
+.creations-exit-bubble__dismiss:focus-visible {
+  background: var(--color-border);
+}
+
+.creations-exit-bubble__body {
+  overflow-y: auto;
+  padding: 16px 20px 20px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--color-text-muted-2);
+}
+
+.creations-exit-bubble__body p {
+  margin: 0 0 14px;
+}
+
+.creations-exit-bubble__body p:last-child {
+  margin-bottom: 0;
+}
+
+.creations-exit-bubble__body code {
+  background: var(--color-bg-light);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.85em;
+}
