@@ -270,6 +270,12 @@ Before pointing real traffic at this:
 
 ### Docker (recommended)
 
+> Deploying to a real server (not just running the stack locally)? See
+> [DEPLOYMENT.md](DEPLOYMENT.md) for the full, security-conscious walkthrough — droplet
+> hardening, a GitHub deploy key, nginx + TLS, backups, all of it. This section is the
+> quick version for people who already have a server and just need the `docker compose`
+> commands.
+
 The included `docker-compose.yml` runs the app behind Gunicorn with a Postgres 16
 container — the whole stack, one command:
 
