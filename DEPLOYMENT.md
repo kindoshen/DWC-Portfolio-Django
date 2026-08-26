@@ -10,6 +10,14 @@ This is the detailed operational runbook. [README.md](README.md) covers the app 
 this file is the authority on production specifics; README's Docker section is the quick
 version for people who already have a server.
 
+**[`deploy-droplet.sh`](deploy-droplet.sh)** automates sections 3 through 13 below (plus
+the backup cron from section 15 and a live security recap from section 17), in the same
+order, for the same reasons — run it and skip straight to reading along as it goes, or
+read the sections below first and run the commands yourself by hand. Either is fine; the
+script is just this document, executed. What it deliberately still stops and asks a human
+for — adding the deploy key to GitHub, the DigitalOcean Cloud Firewall, DNS — is called
+out explicitly at the top of the script and in the matching sections below.
+
 ## Table of Contents
 
 1. [What you'll need before starting](#1-what-youll-need-before-starting)
