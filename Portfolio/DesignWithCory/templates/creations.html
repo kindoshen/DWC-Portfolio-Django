@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% comment %}
+   templates/creations.html — Creations: a small gallery of transparent-background brand/logo
+   assets, presented full-size in an unbordered modal over a shaded overlay. See static/js/
+   creations.js for the interaction: the shaded backdrop is the real close control; the visible
+   "X" opens a second, joke modal instead (static/templates/includes/creations_exit_saga.html).
+{% endcomment %}
+{% load static %}
+
+{% block title %}Creations{% endblock %}
+{% block meta_description %}A small gallery of brand marks and logo concepts by Cory Comly — DesignWithCory's own identity plus a handful of unused logo explorations.{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'css/creations.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <h1>Creations</h1>
+  <p>A few brand marks and logo concepts — click one to see it full-size. Fair warning: the close button has a whole thing going on.</p>
+</section>
+
+<div class="creations-grid">
+  {% for item in creations %}
+    <button type="button" class="creations-grid__item" data-image="{% static item.image %}" data-title="{{ item.title }}" data-caption="{{ item.caption }}">
+      <img src="{% static item.image %}" alt="{{ item.title }}" loading="lazy">
+      <span class="creations-grid__label">{{ item.title }}</span>
+    </button>
+  {% endfor %}
+</div>
+
+<div class="creations-modal" id="creations-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Creation preview">
+  <div class="creations-modal__backdrop" data-role="backdrop"></div>
+
+  <p class="creations-modal__toast" id="creations-modal-toast" aria-live="polite">Here, let me get that for you.</p>
+
+  <div class="creations-modal__stage">
+    <div class="creations-modal__frame">
+      <img class="creations-modal__image" id="creations-modal-image" src="" alt="">
+
+      <div class="creations-modal__close-anchor">
+        <button type="button" class="creations-modal__close" id="creations-modal-close" aria-label="Close (allegedly)">
+          <span aria-hidden="true">&times;</span>
+        </button>
+
+        <div class="creations-exit-bubble" id="creations-exit-bubble" hidden>
+          <div class="creations-exit-bubble__tail" aria-hidden="true"></div>
+          <div class="creations-exit-bubble__header">
+            <span>So, funny story—</span>
+            <button type="button" class="creations-exit-bubble__dismiss" id="creations-exit-dismiss" aria-label="Close this explanation">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="creations-exit-bubble__body">
+            {% include "includes/creations_exit_saga.html" %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="creations-modal__caption" id="creations-modal-caption"></p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/creations.js' %}" defer></script>
+{% endblock %}
