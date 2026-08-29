@@ -23,10 +23,11 @@
   </div>
 </section>
 {% else %}
-<div class="page-media-row work-sample{% if index|divisibleby:2 %} reverse{% endif %}">
+<div class="page-media-row work-sample{% if sample.display_type == 'iframe' %} work-sample--iframe{% endif %}{% if index|divisibleby:2 %} reverse{% endif %}">
   <div class="work-sample__media">
     {% if sample.display_type == 'iframe' and sample.embed_url %}
       <iframe src="{{ sample.embed_url }}" title="{{ sample.title }}" loading="lazy"></iframe>
+      <p class="work-sample__resize-hint">Drag the bottom-right corner to resize — the embed reflows to fit.</p>
     {% elif sample.image %}
       <img src="{{ sample.image.url }}" alt="{{ sample.title }}" width="{{ sample.image.width }}" height="{{ sample.image.height }}" loading="lazy">
     {% endif %}
