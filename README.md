@@ -1,7 +1,7 @@
 # Design With Cory
 
-![Python](https://img.shields.io/badge/python-3.9%2B-blue)
-![Django](https://img.shields.io/badge/django-4.2%20LTS-0C4B33)
+![Python](https://img.shields.io/badge/python-3.12%2B-blue)
+![Django](https://img.shields.io/badge/django-6.0-0C4B33)
 ![License](https://img.shields.io/badge/license-proprietary-red)
 ![Tests](https://img.shields.io/badge/tests-63%20passing-brightgreen)
 
@@ -14,6 +14,9 @@ the contact form.
 
 **This code is proprietary.** It is not open source, not for sale, and not available for
 redistribution. See [License](#license).
+
+See [`PUNCH_LIST.md`](PUNCH_LIST.md) for the current audit log — known issues, what's
+already been checked and found clean, and open follow-up work (test coverage gaps, etc.).
 
 ---
 
@@ -32,7 +35,8 @@ redistribution. See [License](#license).
 - [Pre-Deployment Checklist](#pre-deployment-checklist)
 - [Deployment](#deployment)
   - [Docker (recommended)](#docker-recommended)
-  - [Without Docker](#without-docker)
+  - [Bare metal / monolith (no Docker)](#bare-metal--monolith-no-docker)
+  - [Manual, without either script](#manual-without-either-script)
 - [Project Structure](#project-structure)
 - [Third-Party Libraries](#third-party-libraries)
 - [Contributors](#contributors)
@@ -45,12 +49,15 @@ redistribution. See [License](#license).
 
 Two Django apps do the work:
 
-- **`DesignWithCory`** — the public site: home, About, Work Samples, Blog (index +
-  detail), the résumé viewer, `robots.txt`, and `sitemap.xml`.
+- **`DesignWithCory`** — the public site: home, About, Work Samples (including a live,
+  user-resizable embed of a real interactive project), Creations (an image gallery with
+  a deliberately-broken close button — see the template's own comments if that sounds
+  like a bug report), Blog (index + detail), the protected résumé viewer, `robots.txt`,
+  and `sitemap.xml`.
 - **`crm`** — Customer / Lead / Quote / Project, wired to the public contact form. Every
   submission becomes a `Customer` (deduplicated by email) and a `Lead`; Notes and file
   Attachments can be logged against any of the four models from the Django admin via a
-  shared generic-relation mixin.
+  shared generic-relation mixin (`Attachable` in `crm/models.py`).
 
 The frontend is a hand-modified Nicepage export — `nicepage.css`/`nicepage.js` are the
 vendored framework/theme, `pages.css` holds everything hand-authored for the pages that
@@ -69,12 +76,16 @@ files (contact form submission, the résumé PDF.js viewer) progressively enhanc
   some IDEs) — `python3.12 -m venv env` if creating by hand
 - **pip** (ships with Python)
 - **git**
-- **Docker & Docker Compose**, if you're taking the [Docker deployment path](#docker-recommended)
-  — not required for local development
-- A **PostgreSQL 14+** server, if you're running Postgres locally *without* Docker
+- **Docker & Docker Compose**, only if you're taking the
+  [Docker deployment path](#docker-recommended) — not required for local development,
+  and not required for the [bare-metal/monolith path](#bare-metal--monolith-no-docker)
+  either
+- A **PostgreSQL 14+** server, only if you want Postgres without Docker — genuinely
+  optional even in production: the bare-metal deployment path defaults to SQLite
 
-SQLite (Python's standard library, no install needed) is enough for local development.
-Production is expected to run Postgres — see [Deployment](#deployment).
+SQLite (Python's standard library, no install needed) is enough for local development,
+and — see [Deployment](#deployment) — a legitimate production choice too, not just a dev
+convenience.
 
 ## Quick Installation
 
@@ -198,8 +209,11 @@ cd Portfolio
 python manage.py test
 ```
 
-63 tests, 100% line coverage on both apps' non-migration code as of this writing. To
-check coverage yourself:
+63 tests, **95% line coverage** on both apps' non-migration code as of this writing —
+not 100%; that figure drifted down as newer features (Creations, the `crm` size/URL
+validators) shipped without matching tests. `DesignWithCory/sitemaps.py` (72%) and
+`validators.py` (47%) are the biggest gaps — see [`PUNCH_LIST.md`](PUNCH_LIST.md) for
+the itemized breakdown. To check coverage yourself:
 
 ```bash
 pip install -r ../requirements-dev.txt   # adds the `coverage` package
@@ -272,10 +286,10 @@ Before pointing real traffic at this:
 ### Docker (recommended)
 
 > Deploying to a real server (not just running the stack locally)? See
-> [DEPLOYMENT.md](DEPLOYMENT.md) for the full, security-conscious walkthrough — droplet
-> hardening, a GitHub deploy key, nginx + TLS, backups, all of it. This section is the
-> quick version for people who already have a server and just need the `docker compose`
-> commands.
+> [DEPLOYMENT.md](DEPLOYMENT.md) — and **[`utils/deploy-droplet.sh`](utils/deploy-droplet.sh)**,
+> which automates it — for the full, security-conscious walkthrough: droplet hardening, a
+> GitHub deploy key, nginx + TLS, backups, all of it. This section is the quick version
+> for people who already have a server and just need the `docker compose` commands.
 
 The included `docker-compose.yml` runs the app behind Gunicorn with a Postgres 16
 container — the whole stack, one command:
@@ -303,25 +317,47 @@ docker compose exec web python manage.py migrate
 
 Logs: `docker compose logs -f web`.
 
-### Without Docker
+### Bare metal / monolith (no Docker)
 
-1. Provision a Postgres 14+ database and set `DATABASE_URL` accordingly.
-2. Follow [Quick Installation](#quick-installation) for your OS through `pip install`.
-3. Set every variable in the [Pre-Deployment Checklist](#pre-deployment-checklist).
-4. `python manage.py migrate && python manage.py collectstatic --noinput`.
-5. Run the app with a real WSGI server — **not** `manage.py runserver`, which is
+> Prefer one process over a container stack? **[`utils/deploy-monolith.sh`](utils/deploy-monolith.sh)**
+> automates this end-to-end on a fresh Ubuntu 24.04 droplet: a Python venv running
+> gunicorn under `systemd`, nginx for TLS termination, and **SQLite by default** — no
+> container runtime, no separate database server to operate, with an opt-in prompt if
+> you'd rather point it at a Postgres instance you already run elsewhere. Same
+> droplet-hardening phases as `utils/deploy-droplet.sh` (SSH, UFW, fail2ban, backups);
+> see the comment block at the top of the script for the full rationale on SQLite as the
+> default.
+
+The manual equivalent, if you're not on a fresh droplet or want to see every step:
+
+1. Follow [Quick Installation](#quick-installation) for your OS through `pip install`.
+   `DATABASE_URL` unset is a legitimate production choice here (SQLite) — only provision
+   Postgres and set it if you specifically want that instead.
+2. Set every variable in the [Pre-Deployment Checklist](#pre-deployment-checklist).
+3. `python manage.py migrate && python manage.py collectstatic --noinput`.
+4. Run the app with a real WSGI server — **not** `manage.py runserver`, which is
    dev-only:
    ```bash
-   pip install gunicorn
-   gunicorn Portfolio.wsgi:application --bind 0.0.0.0:8000 --workers 3
+   gunicorn Portfolio.wsgi:application --bind 127.0.0.1:8000 --workers 3
    ```
-6. Put a reverse proxy (nginx, Caddy, your host's load balancer) in front of it for TLS
+   (`gunicorn` is already in `requirements.txt`, so no separate install needed.) Manage
+   it with `systemd` rather than running it in a terminal you have to keep open — see
+   `phase_systemd_service()` in `utils/deploy-monolith.sh` for a working unit file.
+5. Put a reverse proxy (nginx, Caddy, your host's load balancer) in front of it for TLS
    termination, and point `DJANGO_ALLOWED_HOSTS`/`DJANGO_CSRF_TRUSTED_ORIGINS` at the
    real domain.
-7. `media/` (user-uploaded content — résumé, blog covers, work-sample images, CRM
-   attachments) needs somewhere to live that survives a redeploy: a persistent volume,
-   or swap in a cloud storage backend (e.g. `django-storages`) — it is **not** committed
-   to this repo.
+6. `media/` and, if using SQLite, `db.sqlite3` (both gitignored, neither travels with a
+   `git pull`) need somewhere to live that survives a redeploy and gets backed up —
+   `phase_backups()` in `utils/deploy-monolith.sh` shows a working `sqlite3 .backup` +
+   media-tarball cron; swap in a cloud storage backend (e.g. `django-storages`) for
+   `media/` instead if traffic ever justifies it.
+
+### Manual, without either script
+
+Provisioning something neither script targets (a different distro, a PaaS, a host's own
+Postgres-as-a-service)? The steps above still apply — they're distro-agnostic once you're
+past `apt-get`. The two `utils/*.sh` scripts exist to automate a *specific* target (a
+fresh Ubuntu 24.04 droplet); they are not required to deploy this app.
 
 ## Project Structure
 
@@ -331,22 +367,33 @@ DWC-Portfolio-Django/
 │   ├── Portfolio/              # settings.py, urls.py, wsgi.py, asgi.py
 │   ├── DesignWithCory/         # the public site app
 │   │   ├── templates/          # base.html + page templates + includes/
-│   │   ├── static/             # css/ (nicepage.css + pages.css), js/, images/, favicon/
+│   │   │   └── includes/       # creations_exit_saga.html, work_sample_item.html, ...
+│   │   ├── static/
+│   │   │   ├── css/         # nicepage.css (vendored theme) + pages.css + creations.css
+│   │   │   ├── js/          # contact-form.js, creations.js, resume-viewer.js
+│   │   │   ├── lab/         # pattern-atlas.html — the real project the Work Samples
+│   │   │   │                # page iframes in, served same-origin
+│   │   │   └── favicon/
 │   │   ├── migrations/         # schema + seed-content data migrations
 │   │   ├── models.py           # BlogPost, Resume, WorkSample
-│   │   ├── views.py            # public views, robots.txt, sitemap wiring
+│   │   ├── views.py            # public views (incl. Creations), robots.txt, sitemap wiring
 │   │   └── validators.py       # shared upload validators (used by crm too)
 │   ├── crm/                    # Customer/Lead/Quote/Project
-│   │   ├── models.py
-│   │   ├── forms.py            # ContactForm
+│   │   ├── models.py           # incl. the Attachable mixin (generic Note/Attachment FK)
+│   │   ├── forms.py            # ContactForm (+ honeypot/timing anti-spam)
 │   │   ├── views.py            # contact_submit
 │   │   └── admin.py
 │   ├── media/                  # user-uploaded content (gitignored)
 │   └── productionfiles/        # collectstatic output (gitignored)
+├── utils/                      # deployment automation — see DEPLOYMENT.md
+│   ├── deploy-droplet.sh       # Docker + Postgres, on a fresh Ubuntu 24.04 droplet
+│   └── deploy-monolith.sh      # gunicorn/systemd + SQLite, no containers
 ├── requirements.txt
 ├── requirements-dev.txt
 ├── docker-compose.yml
 ├── Dockerfile
+├── DEPLOYMENT.md               # full droplet deployment runbook
+├── PUNCH_LIST.md               # current known-issues / audit log
 └── .env.example
 ```
 
@@ -360,7 +407,8 @@ DWC-Portfolio-Django/
 | [django-ratelimit](https://github.com/jsocol/django-ratelimit) | Rate limiting on the public contact-form endpoint | Apache-2.0 |
 | [PDF.js](https://github.com/mozilla/pdf.js) | Renders the résumé to `<canvas>` in the protected viewer (vendored in `static/js/pdfjs/`, not installed via pip) | Apache-2.0 |
 | [psycopg](https://github.com/psycopg/psycopg2) | PostgreSQL adapter | LGPL |
-| [gunicorn](https://github.com/benoitc/gunicorn) | Production WSGI server (Docker image) | MIT |
+| [dj-database-url](https://github.com/jazzband/dj-database-url) | Parses `DATABASE_URL` into Django's `DATABASES` setting | BSD-3-Clause |
+| [gunicorn](https://github.com/benoitc/gunicorn) | Production WSGI server (both deployment paths — Docker image and bare-metal) | MIT |
 | [coverage.py](https://github.com/nedbat/coveragepy) | Test coverage measurement (dev-only) | Apache-2.0 |
 
 The original site design/markup started as a [Nicepage](https://nicepage.com/) export;
