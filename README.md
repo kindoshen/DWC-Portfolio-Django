@@ -60,12 +60,13 @@ files (contact form submission, the résumé PDF.js viewer) progressively enhanc
 
 ## Prerequisites
 
-- **Python 3.8–3.12** — this is a hard ceiling, not a suggestion: Django 4.2 doesn't
-  support 3.13+, and it fails *late and cryptically* rather than refusing to start (a
-  bare `python -m venv env` against whatever `python3` happens to be on `PATH` is enough
-  to hit this if that's a newer interpreter — `manage.py` now checks and fails fast with
-  a clear message instead). `.python-version` in the repo root pins 3.12 for any tool
-  that reads it (pyenv, uv, some IDEs) — `python3.12 -m venv env` if creating by hand
+- **Python 3.12–3.14** — this is a hard floor as well as a ceiling, not a suggestion:
+  Django 6.0 requires 3.12+ and doesn't support anything older, and it fails *late and
+  cryptically* rather than refusing to start (a bare `python -m venv env` against
+  whatever `python3` happens to be on `PATH` is enough to hit this if that's an older
+  interpreter — `manage.py` now checks and fails fast with a clear message instead).
+  `.python-version` in the repo root pins 3.12 for any tool that reads it (pyenv, uv,
+  some IDEs) — `python3.12 -m venv env` if creating by hand
 - **pip** (ships with Python)
 - **git**
 - **Docker & Docker Compose**, if you're taking the [Docker deployment path](#docker-recommended)
