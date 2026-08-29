@@ -8,7 +8,6 @@ class StaticViewSitemap(Sitemap):
     """The site's fixed pages — no model behind them, so just list the URL names."""
 
     changefreq = "monthly"
-    priority = 0.7
 
     def items(self):
         return ["designWithCory", "about", "work_samples", "creations", "blog_index"]
@@ -16,8 +15,12 @@ class StaticViewSitemap(Sitemap):
     def location(self, item):
         return reverse(item)
 
+    # Defined as a method (not a `priority = 0.7` class attribute) because it varies per
+    # item: home carries the most weight, everything else shares the flat 0.7 baseline.
+    # A same-named class attribute here would be silently shadowed by this method anyway
+    # (Python just keeps the last binding in the class body) — so there's no "class
+    # default" being read anywhere; 0.7 below is the only place that value lives.
     def priority(self, item):
-        # Home carries the most weight; the rest share the class default.
         return 1.0 if item == "designWithCory" else 0.7
 
 
