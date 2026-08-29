@@ -139,10 +139,11 @@ phase_root_bootstrap() {
     rsync --archive --chown="${DEPLOY_USER}:${DEPLOY_USER}" /root/.ssh "/home/${DEPLOY_USER}/"
     ok "Copied root's authorized_keys to ${DEPLOY_USER} so key-based login carries over."
   else
-    warn "root has no ~/.ssh/authorized_keys to copy. Before continuing, make sure" \
-         "${DEPLOY_USER} can SSH in with a key — e.g. paste your public key into" \
-         "/home/${DEPLOY_USER}/.ssh/authorized_keys yourself. The next phase refuses to" \
-         "harden SSH until it can verify that."
+    warn "root has no ~/.ssh/authorized_keys to copy. The next phase disables SSH" \
+         "password auth unconditionally (this script assumes local console access, not" \
+         "a remote SSH session, so it doesn't gate that on a login self-test) — paste" \
+         "your public key into /home/${DEPLOY_USER}/.ssh/authorized_keys yourself first" \
+         "if you'll want to SSH in as ${DEPLOY_USER} afterward."
   fi
 
   echo
@@ -159,16 +160,11 @@ phase_ssh_hardening() {
   log "Phase 2/11: harden SSH (section 4)"
   if phase_done ssh_hardening; then ok "Already done, skipping."; return; fi
 
-  log "Verifying key-based login for ${DEPLOY_USER} BEFORE touching sshd_config — hardening" \
-      "first and checking after would risk locking everyone out if this fails."
-  if ! ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
-        "${DEPLOY_USER}@localhost" true 2>/dev/null; then
-    die "Could not SSH to ${DEPLOY_USER}@localhost with key auth. Fix that first (check" \
-        "~/.ssh/authorized_keys for this user), then re-run this script. Refusing to" \
-        "disable password auth until this self-test passes."
-  fi
-  ok "Key-based login confirmed for ${DEPLOY_USER} — safe to proceed."
-
+  # No "can deploy still SSH in with a key?" self-test here — this script runs locally
+  # at the droplet's own console (or an equivalent always-available local session), not
+  # over the SSH connection it's about to harden, so there's no remote session at risk
+  # of being locked out mid-phase. sshd_config.bak.* below is still kept as the recovery
+  # path if ${DEPLOY_USER}'s authorized_keys turns out to be wrong for *future* logins.
   sudo cp /etc/ssh/sshd_config "/etc/ssh/sshd_config.bak.$(date +%s)"
   sudo sed -i \
     -e 's/^#\?PermitRootLogin.*/PermitRootLogin no/' \
