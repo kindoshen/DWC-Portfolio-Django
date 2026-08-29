@@ -154,8 +154,80 @@
   border: 1px solid var(--color-border);
 }
 
+/* An embedded work sample (currently just Pattern Atlas) breaks out of the
+   440px side-by-side column and stacks full-width instead — the source page
+   is an interactive reference doc, not a screenshot, so it needs real room.
+   Sizing is plain CSS (width/height, no transform: scale()), so the browser's
+   own zoom (Cmd/Ctrl +/-) still scales the iframe's content normally instead
+   of fighting a fixed-scale hack. */
+/* .page-media-row.work-sample--iframe (two classes) so this ties .page-media-row.reverse's
+   specificity instead of losing to it when a Pattern-Atlas-style row lands at a "reverse" index. */
+.page-media-row.work-sample--iframe {
+  flex-direction: column;
+  /* fit-content (not a fixed/100% width) so this row's own width — and
+     everything centered under it — tracks whatever width the iframe below
+     is actually resized to, instead of staying pinned at a fixed container
+     size while the frame grows or shrinks inside it. */
+  width: fit-content;
+  max-width: 96vw;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.work-sample--iframe .work-sample__media {
+  max-width: none;
+  width: fit-content;
+}
+
+.work-sample--iframe .page-copy {
+  max-width: 720px;
+  margin: 32px auto 0;
+  text-align: center;
+}
+
+.work-sample--iframe .work-sample__links {
+  justify-content: center;
+}
+
 .work-sample__media iframe {
   height: 420px;
+}
+
+.work-sample--iframe .work-sample__media iframe {
+  /* An explicit starting size, not a % of the now fit-content wrapper above —
+     sizing this to a percentage of a parent that's sized to *it* would be a
+     circular reference. min()/vw give it a real, responsive default instead. */
+  width: min(1320px, 92vw);
+  height: clamp(480px, 80vh, 1100px);
+  /* `resize` needs a non-visible `overflow` to take effect, and only fires on
+     the element it's set on — the embedded page itself isn't touched, it just
+     re-renders at whatever box size the drag leaves behind (a real browsing
+     context, not a bitmap, so its own responsive CSS reflows to fit). Native
+     drag handle appears at the bottom-right corner; min/max-* below are what
+     keep that drag from shrinking it to nothing or blowing past the viewport —
+     and because the wrapper and row above are fit-content, everything else on
+     the page (the caption, the copy block's centering, the row's own margins)
+     re-flows to whatever size the drag lands on, growing or shrinking with it. */
+  resize: both;
+  overflow: hidden;
+  min-width: 320px;
+  min-height: 320px;
+  max-width: 96vw;
+  max-height: 95vh;
+}
+
+.work-sample__resize-hint {
+  /* Capped so this caption's own text never out-widens a small resize and
+     keeps the fit-content wrapper above pinned to the caption's line length
+     instead of the iframe's actual (possibly narrower) current size; margin-left:
+     auto keeps the (now width-capped) box pinned to the right edge, under the
+     drag handle, the way text-align: right alone did before the cap. */
+  max-width: 320px;
+  margin: 10px 0 0 auto;
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-align: right;
 }
 
 .work-sample__links {
