@@ -32,6 +32,14 @@ document.addEventListener('DOMContentLoaded', function () {
   // Every focusable control inside the dialog, in tab order — used for the focus trap below.
   var focusable = [closeBtn, zoomOutBtn, zoomInBtn];
 
+  // Tiles the watermark text diagonally across the whole page, not just one corner —
+  // a single mark is trivial to crop out of a screenshot. The translate+rotate moves the
+  // canvas's origin to its own center and tilts the whole coordinate system -30°, so the
+  // nested loop below can just lay out a plain upright grid (row spacing 90px, column
+  // spacing 260px) and get a diagonal tiling for free. Looping from -canvas.height/-width
+  // (not 0) overshoots past every edge in both directions so the rotated grid still fully
+  // covers the visible canvas corner-to-corner instead of leaving gaps where the tilted
+  // rows no longer line up with the untilted canvas bounds.
   function watermark(ctx, canvas) {
     ctx.save();
     ctx.globalAlpha = 0.08;
