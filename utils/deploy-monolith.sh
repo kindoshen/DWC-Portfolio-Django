@@ -9,7 +9,7 @@
 #
 # USAGE
 #   Run as root, once, on a brand-new droplet:
-#     curl -fsSL https://raw.githubusercontent.com/kindoshen/DWC-Portfolio-Django/main/deploy-monolith.sh -o deploy-monolith.sh
+#     curl -fsSL https://raw.githubusercontent.com/kindoshen/DWC-Portfolio-Django/main/utils/deploy-monolith.sh -o deploy-monolith.sh
 #     bash deploy-monolith.sh
 #   It creates a non-root "deploy" user and stops. Log back in as that user and run the
 #   *same* script again — it detects the user and continues from there.
@@ -139,6 +139,14 @@ venv_pip()    { echo "${APP_DIR}/env/bin/pip"; }
 # ---------------------------------------------------------------------------------------
 phase_root_bootstrap() {
   log "Phase 1/13: create non-root user '${DEPLOY_USER}'"
+
+  # rsync (used a few lines down) and curl (first used in phase_dns_check, well before
+  # phase_system_packages would otherwise get around to it) aren't guaranteed present on
+  # a minimal droplet image — installed now rather than assumed. git doesn't need the
+  # same treatment: phase_system_packages installs it before anything actually clones
+  # the repo.
+  apt-get update -qq
+  apt-get install -y -qq rsync curl >/dev/null
 
   if id "$DEPLOY_USER" &>/dev/null; then
     ok "User '${DEPLOY_USER}' already exists."

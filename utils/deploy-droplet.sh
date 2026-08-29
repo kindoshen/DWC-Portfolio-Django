@@ -7,7 +7,7 @@
 #
 # USAGE
 #   Run as root, once, on a brand-new droplet:
-#     curl -fsSL https://raw.githubusercontent.com/kindoshen/DWC-Portfolio-Django/main/deploy-droplet.sh -o deploy-droplet.sh
+#     curl -fsSL https://raw.githubusercontent.com/kindoshen/DWC-Portfolio-Django/main/utils/deploy-droplet.sh -o deploy-droplet.sh
 #     bash deploy-droplet.sh
 #   It creates a non-root "deploy" user and stops. Log back in as that user and run the
 #   *same* script again — it detects the user and continues from there.
@@ -117,6 +117,15 @@ PYEOF
 # ---------------------------------------------------------------------------------------
 phase_root_bootstrap() {
   log "Phase 1/11: create non-root user '${DEPLOY_USER}' (section 3)"
+
+  # Not guaranteed present on a minimal droplet image: rsync (used a few lines down,
+  # before any later apt-get phase gets a chance to run), and git (never installed by
+  # any later phase either — the Docker install below pulls in docker-ce/compose, none
+  # of which depend on git). curl/ca-certificates ARE also installed again later
+  # (phase_docker_install) for Docker's own apt repo setup, but a fresh droplet doing
+  # nothing but this bootstrap step until then still benefits from having them now.
+  apt-get update -qq
+  apt-get install -y -qq rsync git curl ca-certificates >/dev/null
 
   if id "$DEPLOY_USER" &>/dev/null; then
     ok "User '${DEPLOY_USER}' already exists."
