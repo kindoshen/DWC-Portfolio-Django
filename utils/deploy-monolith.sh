@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # deploy-monolith.sh — bootstraps a fresh Ubuntu 24.04 DigitalOcean droplet into a running,
 # hardened deployment of this app WITHOUT Docker: a Python venv running gunicorn under
-# systemd, behind nginx for TLS termination, with SQLite as the database by default. One
-# process, one file, no container runtime, no separate database server to operate — a
-# genuine single-box monolith. See deploy-droplet.sh (and DEPLOYMENT.md) for the Docker +
-# Postgres alternative this mirrors phase-for-phase; read the comments in *that* script
-# for background this one doesn't repeat.
+# systemd, behind nginx for TLS termination. One process, no container runtime — a genuine
+# single-box monolith. See deploy-droplet.sh (and DEPLOYMENT.md) for the Docker + Postgres
+# alternative this mirrors phase-for-phase; read the comments in *that* script for
+# background this one doesn't repeat.
 #
 # USAGE
 #   Run as root, once, on a brand-new droplet:
@@ -18,17 +17,25 @@
 # so — if this fails partway (a typo'd domain, DNS not propagated yet, whatever), fix the
 # one thing and run it again rather than starting over.
 #
-# WHY SQLITE, NOT POSTGRES: dj-database-url + psycopg2-binary are still in requirements.txt
-# and DATABASE_URL still works exactly like it does in the Docker deployment — if you
-# already run a managed Postgres instance (DigitalOcean Managed Databases, RDS, whatever)
-# and want to point this at it, phase_clone_and_env below will ask. But standing up and
-# hardening a *local* Postgres cluster on this same box is real, ongoing operational
-# surface (backups, connection tuning, its own security patching) that contradicts the
-# point of a monolith deploy — if you want that, use deploy-droplet.sh instead, which gets
-# it "for free" via the postgres:16-alpine container and its healthcheck. SQLite has no
-# such requirements, is already this project's local-dev default (see settings.py), and is
-# genuinely fine at a portfolio site's actual traffic level — see phase_backups below for
-# how it's protected once it's the thing serving production.
+# DATABASE: phase_clone_and_env (phase 7) asks you to pick one of three — SQLite (the
+# default: zero extra moving parts, genuinely fine at a portfolio site's actual traffic
+# level), a Postgres instance you already run elsewhere (Managed Databases, RDS, whatever
+# — this script just points DATABASE_URL at it), or a **local** Postgres server that this
+# script installs, creates a role/database on, and tunes itself (phase 8). That third
+# option used to be out of scope for this script on the theory that a local DB server was
+# more ongoing surface than a monolith deploy should take on — it's in scope now because
+# entry-level droplets (512MB-1GB RAM) are exactly where that operational cost is worth it
+# for the headroom Postgres gives over SQLite under concurrent writes, and because the
+# tuning below is computed from this box's *actual* detected RAM/CPU at run time rather
+# than a fixed guess, which is most of what made "hand-tune a local Postgres" feel like
+# real work in the first place.
+#
+# ENTRY-LEVEL SIZING: this script reads this droplet's real memory (detect_total_mem_mb)
+# and CPU count (detect_cpu_count) and uses them — not a hardcoded assumption — to size
+# the swapfile (phase 4), gunicorn's worker count (phase 12), and, if you chose local
+# Postgres, its shared_buffers/effective_cache_size/work_mem/maintenance_work_mem/
+# max_connections (phase 8). Re-running this script after a droplet resize re-derives all
+# of these from whatever the new specs actually are.
 #
 # WHAT THIS DOES NOT DO (see DEPLOYMENT.md for the equivalent reasoning — it applies here
 # unchanged):
@@ -57,7 +64,8 @@ DEPLOY_KEY_PATH="/home/${DEPLOY_USER}/.ssh/github_deploy_key"
 NGINX_SITE_NAME="designwithcory"
 SERVICE_NAME="designwithcory"
 GUNICORN_PORT="8000"          # internal only — nginx is the only thing that ever talks to it
-GUNICORN_WORKERS="3"          # matches Dockerfile's gunicorn invocation
+POSTGRES_DB_NAME="designwithcory"
+POSTGRES_DB_USER="designwithcory"
 STATE_DIR="/opt/.deploy-monolith-state"   # tiny marker files so re-runs skip finished phases
 
 # ---------------------------------------------------------------------------------------
@@ -133,12 +141,37 @@ PYEOF
 venv_python() { echo "${APP_DIR}/env/bin/python"; }
 venv_pip()    { echo "${APP_DIR}/env/bin/pip"; }
 
+# Real hardware, not a guess — everything sized "for a low-RAM droplet" below (swap,
+# gunicorn workers, Postgres tuning) reads these at the point it's actually needed rather
+# than once at the top, so a re-run after resizing the droplet picks up the new numbers.
+detect_total_mem_mb() { awk '/MemTotal/{printf "%d", $2 / 1024}' /proc/meminfo; }
+detect_cpu_count()    { nproc; }
+
+compute_gunicorn_workers() {
+  # (2 x CPU) + 1 is gunicorn's own standard guidance, but it assumes RAM isn't the
+  # constraint — on an entry-level droplet it usually is. ~256MB per sync worker is a
+  # reasonable budget for this app; the flat 512MB reserved off the top covers nginx,
+  # fail2ban, the OS itself, and — if phase 8 installed one — a local Postgres server,
+  # so this never recommends more workers than the box can hold without swapping under
+  # normal load. Whichever bound is tighter wins; 2 is the floor either way, since a
+  # single worker means every request queues behind whatever the last one is doing.
+  local mem_mb cpu by_cpu by_mem workers
+  mem_mb=$(detect_total_mem_mb)
+  cpu=$(detect_cpu_count)
+  by_cpu=$(( cpu * 2 + 1 ))
+  by_mem=$(( (mem_mb - 512) / 256 ))
+  (( by_mem < 1 )) && by_mem=1
+  workers=$(( by_cpu < by_mem ? by_cpu : by_mem ))
+  (( workers < 2 )) && workers=2
+  echo "$workers"
+}
+
 # ---------------------------------------------------------------------------------------
 # Phase: root bootstrap — creates the non-root user and stops. Everything after this runs
 # as that user, every time, including re-runs. Identical to deploy-droplet.sh's.
 # ---------------------------------------------------------------------------------------
 phase_root_bootstrap() {
-  log "Phase 1/13: create non-root user '${DEPLOY_USER}'"
+  log "Phase 1/14: create non-root user '${DEPLOY_USER}'"
 
   # rsync (used a few lines down) and curl (first used in phase_dns_check, well before
   # phase_system_packages would otherwise get around to it) aren't guaranteed present on
@@ -177,7 +210,7 @@ phase_root_bootstrap() {
 # Phase: SSH hardening — identical to deploy-droplet.sh's.
 # ---------------------------------------------------------------------------------------
 phase_ssh_hardening() {
-  log "Phase 2/13: harden SSH"
+  log "Phase 2/14: harden SSH"
   if phase_done ssh_hardening; then ok "Already done, skipping."; return; fi
 
   log "Verifying key-based login for ${DEPLOY_USER} BEFORE touching sshd_config — hardening" \
@@ -217,7 +250,7 @@ phase_ssh_hardening() {
 # Firewall half is manual).
 # ---------------------------------------------------------------------------------------
 phase_firewall() {
-  log "Phase 3/13: UFW firewall"
+  log "Phase 3/14: UFW firewall"
   if phase_done firewall; then ok "Already done, skipping."; return; fi
 
   sudo ufw allow OpenSSH
@@ -240,7 +273,7 @@ phase_firewall() {
 # Phase: fail2ban, unattended-upgrades, swap, timezone — identical to deploy-droplet.sh's.
 # ---------------------------------------------------------------------------------------
 phase_baseline_hardening() {
-  log "Phase 4/13: fail2ban, automatic updates, swap"
+  log "Phase 4/14: fail2ban, automatic updates, swap"
   if phase_done baseline_hardening; then ok "Already done, skipping."; return; fi
 
   sudo apt-get update -qq
@@ -257,12 +290,22 @@ APT::Periodic::Unattended-Upgrade "1";' | sudo tee /etc/apt/apt.conf.d/20auto-up
   ok "Unattended security upgrades enabled."
 
   if [[ ! -f /swapfile ]]; then
-    sudo fallocate -l 2G /swapfile
+    local total_mem_mb swap_mb
+    total_mem_mb=$(detect_total_mem_mb)
+    # 2x RAM, floored at 1G and capped at 4G — entry-level droplets (512MB-1GB) need
+    # swap closer to double their RAM to survive a real spike (a `pip install`, a burst
+    # of concurrent gunicorn workers, Postgres's own transient memory use if phase 8
+    # installs it); a box with plenty of RAM already doesn't need swap scaling linearly
+    # with it, hence the cap.
+    swap_mb=$(( total_mem_mb * 2 ))
+    (( swap_mb > 4096 )) && swap_mb=4096
+    (( swap_mb < 1024 )) && swap_mb=1024
+    sudo fallocate -l "${swap_mb}M" /swapfile
     sudo chmod 600 /swapfile
     sudo mkswap /swapfile >/dev/null
     sudo swapon /swapfile
     grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
-    ok "2G swapfile created and enabled."
+    ok "${swap_mb}MB swapfile created and enabled (detected ${total_mem_mb}MB RAM)."
   else
     ok "Swapfile already exists."
   fi
@@ -279,7 +322,7 @@ APT::Periodic::Unattended-Upgrade "1";' | sudo tee /etc/apt/apt.conf.d/20auto-up
 # required, which is a large part of why this box's Python floor matches Django 6.0's.
 # ---------------------------------------------------------------------------------------
 phase_system_packages() {
-  log "Phase 5/13: install Python, nginx, and certbot"
+  log "Phase 5/14: install Python, nginx, and certbot"
   if phase_done system_packages; then ok "Already done, skipping."; return; fi
 
   sudo apt-get update -qq
@@ -301,7 +344,7 @@ phase_system_packages() {
 # Phase: GitHub deploy key — identical to deploy-droplet.sh's.
 # ---------------------------------------------------------------------------------------
 phase_github_deploy_key() {
-  log "Phase 6/13: authenticate to GitHub with a deploy key"
+  log "Phase 6/14: authenticate to GitHub with a deploy key"
 
   if [[ -f "$DEPLOY_KEY_PATH" ]]; then
     ok "Deploy key already exists at ${DEPLOY_KEY_PATH}."
@@ -349,11 +392,11 @@ EOF
 
 # ---------------------------------------------------------------------------------------
 # Phase: clone + .env — same shape as deploy-droplet.sh's, minus the Docker-only knobs
-# (WEB_PORT, POSTGRES_*) and with an extra prompt for whether to point at an external
-# Postgres instead of the SQLite default.
+# (WEB_PORT) and with a three-way prompt for the database — SQLite, a local Postgres
+# (phase 8 below provisions it), or a Postgres instance you already run elsewhere.
 # ---------------------------------------------------------------------------------------
 phase_clone_and_env() {
-  log "Phase 7/13: clone the repo and configure .env"
+  log "Phase 7/14: clone the repo and configure .env"
 
   if [[ -d "$APP_DIR/.git" ]]; then
     ok "Repo already cloned at ${APP_DIR}."
@@ -401,15 +444,35 @@ phase_clone_and_env() {
   set_env_var DJANGO_BEHIND_PROXY "True"
   set_env_var DJANGO_ADMIN_EMAIL "$admin_email"
 
-  echo
-  if confirm "Point this at an existing Postgres instance instead of SQLite? (You already run one elsewhere — e.g. DigitalOcean Managed Databases. Answering No is the recommended, zero-extra-moving-parts default for a monolith deploy.)"; then
-    local database_url
-    ask database_url "Postgres connection string (postgres://user:password@host:port/dbname)"
-    set_env_var DATABASE_URL "$database_url"
-  else
-    ok "Leaving DATABASE_URL blank — this deploy will use SQLite at" \
-       "${APP_DIR}/Portfolio/db.sqlite3, same as local development."
-  fi
+  echo "Database — pick one:"
+  echo "  1) SQLite (default) — zero extra moving parts; fine at this project's actual traffic"
+  echo "  2) Local Postgres — installed, created, and tuned to this droplet's real RAM/CPU" \
+       "by the next phase"
+  echo "  3) An existing Postgres instance you already run elsewhere (Managed Databases, RDS, ...)"
+  local db_choice
+  ask db_choice "Choose 1, 2, or 3" "1"
+
+  case "$db_choice" in
+    2)
+      # The actual DATABASE_URL isn't known yet — phase_postgres_local generates the
+      # password and writes it once Postgres is actually installed. This marker is what
+      # tells that (and every later) phase the choice was "local," including on a re-run
+      # where .env already exists and this whole block is skipped via the early `return`
+      # above — the marker, not an in-memory variable, is what survives that.
+      mark_done local_postgres_requested
+      ok "Local Postgres selected — phase 8 will install it and write DATABASE_URL" \
+         "automatically once it has real credentials to write."
+      ;;
+    3)
+      local database_url
+      ask database_url "Postgres connection string (postgres://user:password@host:port/dbname)"
+      set_env_var DATABASE_URL "$database_url"
+      ;;
+    *)
+      ok "Leaving DATABASE_URL blank — this deploy will use SQLite at" \
+         "${APP_DIR}/Portfolio/db.sqlite3, same as local development."
+      ;;
+  esac
 
   echo
   if confirm "Configure real SMTP now (for contact-form/lead emails)? Skipping leaves mail printing to the journal (journalctl -u ${SERVICE_NAME})."; then
@@ -433,10 +496,109 @@ phase_clone_and_env() {
 }
 
 # ---------------------------------------------------------------------------------------
+# Phase: local PostgreSQL — only does anything if phase 7 recorded "local Postgres" as
+# the choice; otherwise a fast no-op. Installs the server, creates a dedicated role +
+# database with a freshly generated password, writes DATABASE_URL, and tunes Postgres's
+# memory settings from this droplet's *actual* detected RAM rather than a fixed guess.
+# ---------------------------------------------------------------------------------------
+phase_postgres_local() {
+  log "Phase 8/14: local PostgreSQL (only if chosen in phase 7)"
+
+  if ! phase_done local_postgres_requested; then
+    ok "SQLite or an external Postgres was chosen in phase 7 — nothing to provision here."
+    return
+  fi
+  if phase_done postgres_local; then ok "Already provisioned, skipping."; return; fi
+
+  sudo apt-get update -qq
+  sudo apt-get install -y -qq postgresql postgresql-contrib >/dev/null
+  sudo systemctl enable --now postgresql >/dev/null
+  ok "PostgreSQL installed and running."
+
+  local db_pass
+  db_pass=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
+
+  # createuser/createdb both fail loudly if the role/database already exists, so check
+  # first — this whole phase needs to survive a re-run cleanly, same as every other one.
+  if sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='${POSTGRES_DB_USER}'" | grep -q 1; then
+    # Role survived from an earlier, interrupted attempt at this phase — the password
+    # just generated above wouldn't match whatever it was set to then, so reset it
+    # explicitly rather than writing a DATABASE_URL below with a password that's wrong.
+    sudo -u postgres psql <<SQL
+ALTER ROLE ${POSTGRES_DB_USER} WITH PASSWORD '${db_pass}';
+SQL
+  else
+    # Piped via stdin, not `psql -c "...${db_pass}..."` — a -c argument is visible to
+    # anyone on the box running `ps aux` for the few milliseconds the command runs;
+    # stdin isn't.
+    sudo -u postgres psql <<SQL
+CREATE ROLE ${POSTGRES_DB_USER} WITH LOGIN PASSWORD '${db_pass}';
+SQL
+  fi
+
+  if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB_NAME}'" | grep -q 1; then
+    sudo -u postgres createdb -O "${POSTGRES_DB_USER}" "${POSTGRES_DB_NAME}"
+  fi
+  ok "Role '${POSTGRES_DB_USER}' and database '${POSTGRES_DB_NAME}' ready."
+
+  set_env_var DATABASE_URL "postgres://${POSTGRES_DB_USER}:${db_pass}@127.0.0.1:5432/${POSTGRES_DB_NAME}"
+
+  # Self-test over the same TCP path Django will actually use, not just the Unix-socket
+  # `sudo -u postgres psql` above — catches a bad pg_hba.conf now, with a clear message,
+  # instead of `manage.py migrate` failing later with a much less obvious Django DB error.
+  # Ubuntu's default pg_hba.conf already permits password auth on 127.0.0.1, so this
+  # should just work; the check exists for the droplet where something's overridden that.
+  if ! PGPASSWORD="$db_pass" psql -h 127.0.0.1 -U "${POSTGRES_DB_USER}" -d "${POSTGRES_DB_NAME}" -tAc "SELECT 1;" &>/dev/null; then
+    die "Provisioned Postgres, but couldn't connect back to it over TCP as" \
+        "'${POSTGRES_DB_USER}' with the generated password. Check" \
+        "/etc/postgresql/*/main/pg_hba.conf has a 'host ... 127.0.0.1/32 scram-sha-256'" \
+        "line (Ubuntu's default does) and 'sudo systemctl status postgresql'."
+  fi
+  ok "DATABASE_URL written to .env and confirmed reachable over TCP."
+
+  # --- Tuning, computed from this box's real specs, not a fixed guess -------------------
+  local total_mem_mb shared_buffers_mb effective_cache_mb work_mem_mb maint_mem_mb max_conns
+  total_mem_mb=$(detect_total_mem_mb)
+  # Standard Postgres tuning guidance (shared_buffers ~25% of RAM, effective_cache_size
+  # ~50-75%) assumes a server dedicated to nothing but the database. This box also runs
+  # gunicorn and nginx and the OS itself, so these are deliberately more conservative —
+  # roughly half the textbook fraction — to leave real headroom for everything else,
+  # which matters most exactly on the entry-level (512MB-1GB) droplets this script is
+  # meant to size correctly for: the gap between "conservative" and "textbook" here is
+  # the gap between staying up and the OOM killer picking a process at random.
+  shared_buffers_mb=$(( total_mem_mb / 8 ))
+  (( shared_buffers_mb < 32 ))  && shared_buffers_mb=32
+  (( shared_buffers_mb > 256 )) && shared_buffers_mb=256
+  effective_cache_mb=$(( total_mem_mb / 3 ))
+  work_mem_mb=4
+  maint_mem_mb=$(( total_mem_mb / 16 ))
+  (( maint_mem_mb < 16 ))  && maint_mem_mb=16
+  (( maint_mem_mb > 128 )) && maint_mem_mb=128
+  # A small Django app behind a handful of gunicorn workers never needs Postgres's
+  # default 100 connections — each one reserved costs real memory whether it's ever
+  # actually used or not.
+  max_conns=20
+
+  sudo -u postgres psql <<SQL
+ALTER SYSTEM SET shared_buffers = '${shared_buffers_mb}MB';
+ALTER SYSTEM SET effective_cache_size = '${effective_cache_mb}MB';
+ALTER SYSTEM SET work_mem = '${work_mem_mb}MB';
+ALTER SYSTEM SET maintenance_work_mem = '${maint_mem_mb}MB';
+ALTER SYSTEM SET max_connections = ${max_conns};
+SQL
+  sudo systemctl restart postgresql
+  ok "PostgreSQL tuned for ${total_mem_mb}MB RAM: shared_buffers=${shared_buffers_mb}MB," \
+     "effective_cache_size=${effective_cache_mb}MB, work_mem=${work_mem_mb}MB," \
+     "maintenance_work_mem=${maint_mem_mb}MB, max_connections=${max_conns}."
+
+  mark_done postgres_local
+}
+
+# ---------------------------------------------------------------------------------------
 # Phase: DNS check — identical to deploy-droplet.sh's.
 # ---------------------------------------------------------------------------------------
 phase_dns_check() {
-  log "Phase 8/13: verify DNS points at this droplet"
+  log "Phase 9/14: verify DNS points at this droplet"
 
   local hosts_line
   hosts_line=$(grep '^DJANGO_ALLOWED_HOSTS=' "${APP_DIR}/.env" | cut -d= -f2-)
@@ -475,7 +637,7 @@ phase_dns_check() {
 # pointed at gunicorn's fixed local port instead of a docker-published one.
 # ---------------------------------------------------------------------------------------
 phase_nginx_tls() {
-  log "Phase 9/13: nginx reverse proxy + TLS"
+  log "Phase 10/14: nginx reverse proxy + TLS"
 
   local hosts_line
   hosts_line=$(grep '^DJANGO_ALLOWED_HOSTS=' "${APP_DIR}/.env" | cut -d= -f2-)
@@ -531,7 +693,7 @@ EOF
 # equivalent: create the venv, install pinned dependencies, migrate, collectstatic.
 # ---------------------------------------------------------------------------------------
 phase_app_setup() {
-  log "Phase 10/13: Python venv, dependencies, migrations, static files"
+  log "Phase 11/14: Python venv, dependencies, migrations, static files"
   cd "$APP_DIR"
 
   if [[ ! -x "$(venv_python)" ]]; then
@@ -575,7 +737,12 @@ phase_app_setup() {
 # own crash-loop backoff replace what `restart: unless-stopped` gives the Docker version.
 # ---------------------------------------------------------------------------------------
 phase_systemd_service() {
-  log "Phase 11/13: install the gunicorn systemd service"
+  log "Phase 12/14: install the gunicorn systemd service"
+
+  local gunicorn_workers
+  gunicorn_workers=$(compute_gunicorn_workers)
+  echo "Detected: $(detect_total_mem_mb)MB RAM, $(detect_cpu_count) CPU core(s) ->" \
+       "${gunicorn_workers} gunicorn workers."
 
   sudo tee "/etc/systemd/system/${SERVICE_NAME}.service" >/dev/null <<EOF
 [Unit]
@@ -591,7 +758,7 @@ EnvironmentFile=${APP_DIR}/.env
 Environment=PYTHONUNBUFFERED=1
 ExecStart=${APP_DIR}/env/bin/gunicorn Portfolio.wsgi:application \\
     --bind 127.0.0.1:${GUNICORN_PORT} \\
-    --workers ${GUNICORN_WORKERS} \\
+    --workers ${gunicorn_workers} \\
     --access-logfile - \\
     --error-logfile -
 Restart=on-failure
@@ -630,7 +797,7 @@ EOF
 # direct localhost hit on gunicorn in addition to the public HTTPS checks.
 # ---------------------------------------------------------------------------------------
 phase_verify() {
-  log "Phase 12/13: verify the deployment"
+  log "Phase 13/14: verify the deployment"
   cd "$APP_DIR"
 
   local hosts_line primary_domain
@@ -674,7 +841,7 @@ phase_verify() {
 # at Postgres instead.
 # ---------------------------------------------------------------------------------------
 phase_backups() {
-  log "Phase 13/13: daily backups"
+  log "Phase 14/14: daily backups"
   if phase_done backups; then ok "Already configured, skipping."; return; fi
 
   sudo mkdir -p "$BACKUP_DIR"
@@ -700,8 +867,8 @@ phase_backups() {
     fi
     ok "Daily 03:00 UTC SQLite + media backup cron installed, 7-day local retention."
   else
-    # Postgres (an external instance the operator chose in phase_clone_and_env) — dump via
-    # its own connection string rather than assuming local pg_dump credentials exist.
+    # Postgres, local (phase 8) or external (phase 7) — either way dump via .env's own
+    # connection string rather than assuming local pg_dump credentials/trust auth exist.
     cron_line="0 3 * * * DATE=\$(date +\%F); pg_dump \"${database_url}\" | gzip > ${BACKUP_DIR}/db-\$DATE.sql.gz && tar czf ${BACKUP_DIR}/media-\$DATE.tar.gz -C ${APP_DIR}/Portfolio media && find ${BACKUP_DIR} \( -name 'db-*.sql.gz' -o -name 'media-*.tar.gz' \) -mtime +7 -delete"
     if ! command -v pg_dump &>/dev/null; then
       sudo apt-get install -y -qq postgresql-client >/dev/null
@@ -746,6 +913,12 @@ print_security_summary() {
   systemctl is-enabled --quiet "${SERVICE_NAME}" \
     && echo -e "$check_ok ${SERVICE_NAME}.service enabled on boot" \
     || echo -e "$check_warn ${SERVICE_NAME}.service enabled on boot"
+
+  if phase_done local_postgres_requested; then
+    systemctl is-active --quiet postgresql \
+      && echo -e "$check_ok postgresql.service running (local Postgres)" \
+      || echo -e "$check_warn postgresql.service running (local Postgres)"
+  fi
 
   [[ "$(stat -c '%a' .env)" == "600" ]] \
     && echo -e "$check_ok .env permissions are 600" \
@@ -816,6 +989,7 @@ main() {
   phase_system_packages
   phase_github_deploy_key
   phase_clone_and_env
+  phase_postgres_local
   phase_dns_check
   phase_nginx_tls
   phase_app_setup

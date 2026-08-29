@@ -80,8 +80,9 @@ files (contact form submission, the résumé PDF.js viewer) progressively enhanc
   [Docker deployment path](#docker-recommended) — not required for local development,
   and not required for the [bare-metal/monolith path](#bare-metal--monolith-no-docker)
   either
-- A **PostgreSQL 14+** server, only if you want Postgres without Docker — genuinely
-  optional even in production: the bare-metal deployment path defaults to SQLite
+- A **PostgreSQL 14+** server, only if you want Postgres without Docker *and* without
+  `utils/deploy-monolith.sh` installing one for you — genuinely optional even in
+  production: the bare-metal deployment path defaults to SQLite
 
 SQLite (Python's standard library, no install needed) is enough for local development,
 and — see [Deployment](#deployment) — a legitimate production choice too, not just a dev
@@ -321,12 +322,14 @@ Logs: `docker compose logs -f web`.
 
 > Prefer one process over a container stack? **[`utils/deploy-monolith.sh`](utils/deploy-monolith.sh)**
 > automates this end-to-end on a fresh Ubuntu 24.04 droplet: a Python venv running
-> gunicorn under `systemd`, nginx for TLS termination, and **SQLite by default** — no
-> container runtime, no separate database server to operate, with an opt-in prompt if
-> you'd rather point it at a Postgres instance you already run elsewhere. Same
-> droplet-hardening phases as `utils/deploy-droplet.sh` (SSH, UFW, fail2ban, backups);
-> see the comment block at the top of the script for the full rationale on SQLite as the
-> default.
+> gunicorn under `systemd`, nginx for TLS termination — no container runtime. It asks you
+> to pick a database (**SQLite** by default; a **local Postgres** it installs, creates,
+> and tunes itself; or an external Postgres instance you already run elsewhere), and
+> sizes everything it can — swap, gunicorn's worker count, Postgres's memory settings if
+> you chose local — from this droplet's *actual* detected RAM/CPU, which is what makes it
+> a reasonable fit for an entry-level (512MB-1GB) droplet specifically, not just "any"
+> droplet. Same droplet-hardening phases as `utils/deploy-droplet.sh` (SSH, UFW, fail2ban,
+> backups); see the comment block at the top of the script for the full rationale.
 
 The manual equivalent, if you're not on a fresh droplet or want to see every step:
 
