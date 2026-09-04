@@ -1,27 +1,40 @@
 #!/usr/bin/env bash
-# deploy-monolith.sh — bootstraps a fresh Ubuntu 24.04 DigitalOcean droplet into a running,
+# deploy-monolith.sh — bootstraps a fresh Ubuntu 24.04-or-newer DigitalOcean droplet into a running,
 # hardened deployment of this app WITHOUT Docker: a Python venv running gunicorn under
 # systemd, behind nginx for TLS termination. One process, no container runtime — a genuine
 # single-box monolith. See deploy-droplet.sh (and DEPLOYMENT.md) for the Docker + Postgres
-# alternative this mirrors phase-for-phase; read the comments in *that* script for
-# background this one doesn't repeat.
+# alternative this otherwise mirrors phase-for-phase; read the comments in *that* script
+# for background this one doesn't repeat. (One structural difference: deploy-droplet.sh
+# still opens with a root "phase 1" that creates the deploy user and hands off; this
+# script dropped that and assumes the deploy user already exists, so its phase numbers
+# run one behind that script's from "harden SSH" onward.)
 #
 # USAGE
-#   Run as root, once, on a brand-new droplet:
+#   This script runs entirely as the preconfigured non-root "deploy" user — the account
+#   your droplet image / cloud-init already created with sudo rights and either your SSH
+#   key or console access in place. It does NOT create that user, and it never needs a
+#   working SSH login *to localhost* to do its job: run it once, as "deploy", from any
+#   shell you already have on the box (the serial/web console, a cloud-init runcmd, a
+#   `doctl compute ssh` session, a CI step — whatever):
 #     curl -fsSL https://raw.githubusercontent.com/kindoshen/DWC-Portfolio-Django/main/utils/deploy-monolith.sh -o deploy-monolith.sh
 #     bash deploy-monolith.sh
-#   It creates a non-root "deploy" user and stops. Log back in as that user and run the
-#   *same* script again — it detects the user and continues from there.
+#   It runs straight through all 13 phases in one pass. (Earlier versions began with a
+#   root "phase 0" that created the deploy user and made you log back in as it before
+#   continuing; that step is gone — provision the user when you create the droplet, e.g.
+#   via the cloud-init 'users:' block or `adduser deploy && usermod -aG sudo deploy`.)
+#
+#   The deploy user's sudo must work non-interactively OR you must run this somewhere you
+#   can answer sudo's password prompt — every phase past this point uses `sudo`.
 #
 # SAFE TO RE-RUN. Every phase checks whether its own work is already done and skips it if
 # so — if this fails partway (a typo'd domain, DNS not propagated yet, whatever), fix the
 # one thing and run it again rather than starting over.
 #
-# DATABASE: phase_clone_and_env (phase 7) asks you to pick one of three — SQLite (the
+# DATABASE: phase_clone_and_env (phase 6) asks you to pick one of three — SQLite (the
 # default: zero extra moving parts, genuinely fine at a portfolio site's actual traffic
 # level), a Postgres instance you already run elsewhere (Managed Databases, RDS, whatever
 # — this script just points DATABASE_URL at it), or a **local** Postgres server that this
-# script installs, creates a role/database on, and tunes itself (phase 8). That third
+# script installs, creates a role/database on, and tunes itself (phase 7). That third
 # option used to be out of scope for this script on the theory that a local DB server was
 # more ongoing surface than a monolith deploy should take on — it's in scope now because
 # entry-level droplets (512MB-1GB RAM) are exactly where that operational cost is worth it
@@ -32,9 +45,9 @@
 #
 # ENTRY-LEVEL SIZING: this script reads this droplet's real memory (detect_total_mem_mb)
 # and CPU count (detect_cpu_count) and uses them — not a hardcoded assumption — to size
-# the swapfile (phase 4), gunicorn's worker count (phase 12), and, if you chose local
+# the swapfile (phase 3), gunicorn's worker count (phase 11), and, if you chose local
 # Postgres, its shared_buffers/effective_cache_size/work_mem/maintenance_work_mem/
-# max_connections (phase 8). Re-running this script after a droplet resize re-derives all
+# max_connections (phase 7). Re-running this script after a droplet resize re-derives all
 # of these from whatever the new specs actually are.
 #
 # WHAT THIS DOES NOT DO (see DEPLOYMENT.md for the equivalent reasoning — it applies here
@@ -67,6 +80,13 @@ GUNICORN_PORT="8000"          # internal only — nginx is the only thing that e
 POSTGRES_DB_NAME="designwithcory"
 POSTGRES_DB_USER="designwithcory"
 STATE_DIR="/opt/.deploy-monolith-state"   # tiny marker files so re-runs skip finished phases
+
+# Minimum Python this app runs on — Django 6.0's own floor. The script builds the venv
+# from the distro's DEFAULT `python3` (not a version-pinned package name), because which
+# 3.x that is varies by image: Ubuntu 24.04/24.10 ship 3.12, 25.04 ships 3.13, 25.10
+# ships 3.14, Debian 13 ships 3.13. Any of those is fine; anything older than this is not
+# and the script stops with a clear message rather than building a venv Django won't load.
+PYTHON_MIN="3.12"
 
 # ---------------------------------------------------------------------------------------
 # Small helpers — identical to deploy-droplet.sh's; kept in sync deliberately rather than
@@ -141,6 +161,19 @@ PYEOF
 venv_python() { echo "${APP_DIR}/env/bin/python"; }
 venv_pip()    { echo "${APP_DIR}/env/bin/pip"; }
 
+# Version of the distro-default python3 the venv is built from, as e.g. "3.14.4".
+system_python_version() { python3 -c 'import platform; print(platform.python_version())'; }
+
+# True iff `python3` is >= $PYTHON_MIN. Compared numerically (tuple compare), so "3.14"
+# correctly beats "3.9" — a string compare would get that backwards.
+python_version_ok() {
+  python3 - "$PYTHON_MIN" <<'PYEOF'
+import sys
+want = tuple(int(p) for p in sys.argv[1].split("."))
+sys.exit(0 if sys.version_info[:len(want)] >= want else 1)
+PYEOF
+}
+
 # Real hardware, not a guess — everything sized "for a low-RAM droplet" below (swap,
 # gunicorn workers, Postgres tuning) reads these at the point it's actually needed rather
 # than once at the top, so a re-run after resizing the droplet picks up the new numbers.
@@ -151,7 +184,7 @@ compute_gunicorn_workers() {
   # (2 x CPU) + 1 is gunicorn's own standard guidance, but it assumes RAM isn't the
   # constraint — on an entry-level droplet it usually is. ~256MB per sync worker is a
   # reasonable budget for this app; the flat 512MB reserved off the top covers nginx,
-  # fail2ban, the OS itself, and — if phase 8 installed one — a local Postgres server,
+  # fail2ban, the OS itself, and — if phase 7 installed one — a local Postgres server,
   # so this never recommends more workers than the box can hold without swapping under
   # normal load. Whichever bound is tighter wins; 2 is the floor either way, since a
   # single worker means every request queues behind whatever the last one is doing.
@@ -167,58 +200,18 @@ compute_gunicorn_workers() {
 }
 
 # ---------------------------------------------------------------------------------------
-# Phase: root bootstrap — creates the non-root user and stops. Everything after this runs
-# as that user, every time, including re-runs. Identical to deploy-droplet.sh's.
-# ---------------------------------------------------------------------------------------
-phase_root_bootstrap() {
-  log "Phase 1/14: create non-root user '${DEPLOY_USER}'"
-
-  # rsync (used a few lines down) and curl (first used in phase_dns_check, well before
-  # phase_system_packages would otherwise get around to it) aren't guaranteed present on
-  # a minimal droplet image — installed now rather than assumed. git doesn't need the
-  # same treatment: phase_system_packages installs it before anything actually clones
-  # the repo.
-  apt-get update -qq
-  apt-get install -y -qq rsync curl >/dev/null
-
-  if id "$DEPLOY_USER" &>/dev/null; then
-    ok "User '${DEPLOY_USER}' already exists."
-  else
-    adduser --disabled-password --gecos "" "$DEPLOY_USER"
-    usermod -aG sudo "$DEPLOY_USER"
-    ok "Created '${DEPLOY_USER}' with sudo rights."
-  fi
-
-  if [[ -s /root/.ssh/authorized_keys ]]; then
-    rsync --archive --chown="${DEPLOY_USER}:${DEPLOY_USER}" /root/.ssh "/home/${DEPLOY_USER}/"
-    ok "Copied root's authorized_keys to ${DEPLOY_USER} so key-based login carries over."
-  else
-    warn "root has no ~/.ssh/authorized_keys to copy. The next phase disables SSH" \
-         "password auth unconditionally (this script assumes local console access, not" \
-         "a remote SSH session, so it doesn't gate that on a login self-test) — paste" \
-         "your public key into /home/${DEPLOY_USER}/.ssh/authorized_keys yourself first" \
-         "if you'll want to SSH in as ${DEPLOY_USER} afterward."
-  fi
-
-  echo
-  ok "Phase 1 complete."
-  echo "    Log out, then log back in as: ssh ${DEPLOY_USER}@<this-droplet-ip>"
-  echo "    Then re-run this exact script — it will pick up from phase 2."
-  exit 0
-}
-
-# ---------------------------------------------------------------------------------------
 # Phase: SSH hardening — identical to deploy-droplet.sh's.
 # ---------------------------------------------------------------------------------------
 phase_ssh_hardening() {
-  log "Phase 2/14: harden SSH"
+  log "Phase 1/13: harden SSH"
   if phase_done ssh_hardening; then ok "Already done, skipping."; return; fi
 
-  # No "can deploy still SSH in with a key?" self-test here — this script runs locally
-  # at the droplet's own console (or an equivalent always-available local session), not
+  # No "can deploy still SSH in with a key?" self-test here — this script is run from a
+  # shell you already hold on the box (console, cloud-init, an existing session), not
   # over the SSH connection it's about to harden, so there's no remote session at risk
-  # of being locked out mid-phase. sshd_config.bak.* below is still kept as the recovery
-  # path if ${DEPLOY_USER}'s authorized_keys turns out to be wrong for *future* logins.
+  # of being locked out mid-phase. It also never depends on SSH-to-localhost working:
+  # if ${DEPLOY_USER}'s authorized_keys turns out to be wrong, that only affects *future*
+  # logins, and sshd_config.bak.* below is the recovery path for exactly that.
   sudo cp /etc/ssh/sshd_config "/etc/ssh/sshd_config.bak.$(date +%s)"
   sudo sed -i \
     -e 's/^#\?PermitRootLogin.*/PermitRootLogin no/' \
@@ -246,7 +239,7 @@ phase_ssh_hardening() {
 # Firewall half is manual).
 # ---------------------------------------------------------------------------------------
 phase_firewall() {
-  log "Phase 3/14: UFW firewall"
+  log "Phase 2/13: UFW firewall"
   if phase_done firewall; then ok "Already done, skipping."; return; fi
 
   sudo ufw allow OpenSSH
@@ -269,7 +262,7 @@ phase_firewall() {
 # Phase: fail2ban, unattended-upgrades, swap, timezone — identical to deploy-droplet.sh's.
 # ---------------------------------------------------------------------------------------
 phase_baseline_hardening() {
-  log "Phase 4/14: fail2ban, automatic updates, swap"
+  log "Phase 3/13: fail2ban, automatic updates, swap"
   if phase_done baseline_hardening; then ok "Already done, skipping."; return; fi
 
   sudo apt-get update -qq
@@ -290,7 +283,7 @@ APT::Periodic::Unattended-Upgrade "1";' | sudo tee /etc/apt/apt.conf.d/20auto-up
     total_mem_mb=$(detect_total_mem_mb)
     # 2x RAM, floored at 1G and capped at 4G — entry-level droplets (512MB-1GB) need
     # swap closer to double their RAM to survive a real spike (a `pip install`, a burst
-    # of concurrent gunicorn workers, Postgres's own transient memory use if phase 8
+    # of concurrent gunicorn workers, Postgres's own transient memory use if phase 7
     # installs it); a box with plenty of RAM already doesn't need swap scaling linearly
     # with it, hence the cap.
     swap_mb=$(( total_mem_mb * 2 ))
@@ -313,57 +306,126 @@ APT::Periodic::Unattended-Upgrade "1";' | sudo tee /etc/apt/apt.conf.d/20auto-up
 
 # ---------------------------------------------------------------------------------------
 # Phase: system packages — the Docker-flavored script installs Docker Engine here; this
-# one installs the much shorter list of things a bare Python app actually needs. Ubuntu
-# 24.04 ships Python 3.12 in its default repos — no deadsnakes PPA or compiling-from-source
-# required, which is a large part of why this box's Python floor matches Django 6.0's.
+# one installs the much shorter list of things a bare Python app actually needs. It uses
+# the distro's DEFAULT python3 (packages `python3` / `python3-venv`, not a pinned
+# `python3.12`): every supported base image — Ubuntu 24.04 (3.12) through 25.10 (3.14),
+# Debian 13 (3.13) — ships a python3 new enough for Django 6.0 straight from its own
+# repos, with no deadsnakes PPA or compiling from source. A pinned `python3.12` breaks
+# the moment the image moves on (25.10 has no `python3.12` package at all); the explicit
+# version *floor* below is what actually guards against too-old, and it does so with a
+# real check instead of a package name that happens to fail on the wrong distro.
 # ---------------------------------------------------------------------------------------
 phase_system_packages() {
-  log "Phase 5/14: install Python, nginx, and certbot"
+  log "Phase 4/13: install Python, nginx, certbot, and curl"
   if phase_done system_packages; then ok "Already done, skipping."; return; fi
 
+  # curl used to be installed by the old root phase 0 (gone now). It's needed first in
+  # phase_dns_check (phase 8) and isn't guaranteed on a minimal droplet image, so it's
+  # pulled in here — the earliest phase that installs packages anyway, and well before
+  # anything reads it. git gets the same treatment; phase_clone_and_env needs it next.
   sudo apt-get update -qq
   sudo apt-get install -y -qq \
-    python3.12 python3.12-venv python3-pip \
-    git nginx certbot python3-certbot-nginx >/dev/null
-  ok "Installed: python3.12, nginx, certbot."
+    python3 python3-venv python3-pip \
+    git curl nginx certbot python3-certbot-nginx >/dev/null
+
+  # Django 6.0 won't import on < ${PYTHON_MIN}. Catch that here, with a message that
+  # names the actual version, rather than letting phase_app_setup build a venv that
+  # then explodes on the first `manage.py` call.
+  local pyver
+  pyver=$(system_python_version)
+  if ! python_version_ok; then
+    die "This image's default python3 is ${pyver}, older than the ${PYTHON_MIN} that" \
+        "Django 6.0 requires. Redeploy on a newer base image (Ubuntu 24.04+ / Debian" \
+        "13+ all qualify) — this script deliberately won't pull in a deadsnakes PPA or" \
+        "build Python from source on a box this old."
+  fi
+  ok "Installed: python3 ${pyver}, nginx, certbot, curl."
 
   # No build-essential / libpq-dev on purpose: every pinned dependency in requirements.txt
   # (Django, Pillow, psycopg2-binary, gunicorn, ...) ships a prebuilt wheel for this
-  # platform — the Dockerfile installs into python:3.12-slim the same way, with no
+  # platform — the Dockerfile installs into its python:*-slim base the same way, with no
   # compiler either. If a future dependency ever needs one, `pip install` will say so
   # explicitly rather than failing silently, and `sudo apt-get install build-essential
   # libpq-dev` is the fix.
   mark_done system_packages
 }
 
+# Does SSH auth to github.com already succeed for this user? True for a preconfigured
+# deploy user that already has a working key (its own ~/.ssh/id_*, an agent, or a deploy
+# key added to GitHub on an earlier run) — in which case phase 5 has nothing to do.
+github_ssh_works() {
+  ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -T git@github.com 2>&1 \
+    | grep -q "successfully authenticated"
+}
+
+# Print the OpenSSH public key for a private key, whether or not a matching .pub file
+# sits next to it (an existing id_* the user points us at might not have one).
+print_public_key() {
+  local key="$1"
+  if [[ -f "${key}.pub" ]]; then cat "${key}.pub"; else ssh-keygen -y -f "$key"; fi
+}
+
 # ---------------------------------------------------------------------------------------
-# Phase: GitHub deploy key — identical to deploy-droplet.sh's.
+# Phase: GitHub deploy key — same intent as deploy-droplet.sh's, but checks for a key /
+# working auth that already exists before generating one, and is skippable: the only
+# thing downstream that needs GitHub is the SSH clone in phase 6, so if you're handling
+# that another way (HTTPS remote, a key you'll wire up later) you can decline every
+# prompt here and this phase becomes a no-op.
 # ---------------------------------------------------------------------------------------
 phase_github_deploy_key() {
-  log "Phase 6/14: authenticate to GitHub with a deploy key"
+  log "Phase 5/13: authenticate to GitHub with a deploy key"
 
-  if [[ -f "$DEPLOY_KEY_PATH" ]]; then
-    ok "Deploy key already exists at ${DEPLOY_KEY_PATH}."
-  else
-    ssh-keygen -t ed25519 -C "$(hostname)-deploy-key" -f "$DEPLOY_KEY_PATH" -N ""
-    ok "Generated a new ed25519 deploy key."
+  # 1. Already working? Nothing to generate, nothing to paste into GitHub's UI.
+  if github_ssh_works; then
+    ok "GitHub SSH auth already works for this user — no deploy key needed."
+    return
   fi
 
+  # 2. Skip gate. Declining here (or any non-interactive run, where confirm reads EOF)
+  #    leaves GitHub auth unconfigured; phase 6's clone will then fail until it's sorted.
+  if ! confirm "Set up a GitHub deploy key now? (needed only for the SSH clone in phase 6)"; then
+    warn "Skipping GitHub deploy-key setup. phase_clone_and_env (phase 6) can't clone" \
+         "${REPO_SSH_URL} until this user can reach GitHub over SSH — re-run this script" \
+         "once that's in place, or point REPO_SSH_URL at an https:// URL instead."
+    return
+  fi
+
+  # 3. Reuse an existing key before generating a fresh one.
+  local key_path=""
+  if [[ -f "$DEPLOY_KEY_PATH" ]]; then
+    key_path="$DEPLOY_KEY_PATH"
+    ok "Reusing the existing deploy key at ${key_path}."
+  elif [[ -d "$HOME/.ssh" ]]; then
+    local existing
+    existing=$(find "$HOME/.ssh" -maxdepth 1 -type f -name 'id_*' ! -name '*.pub' 2>/dev/null \
+      | sort | head -n1 || true)
+    if [[ -n "$existing" ]] \
+       && confirm "This user already has an SSH key at ${existing} — use it for GitHub instead of generating a new one?"; then
+      key_path="$existing"
+    fi
+  fi
+
+  if [[ -z "$key_path" ]]; then
+    ssh-keygen -t ed25519 -C "$(hostname)-deploy-key" -f "$DEPLOY_KEY_PATH" -N ""
+    key_path="$DEPLOY_KEY_PATH"
+    ok "Generated a new ed25519 deploy key at ${key_path}."
+  fi
+
+  # 4. Point ssh at whichever key we settled on.
   mkdir -p ~/.ssh
-  if ! grep -q "IdentityFile ${DEPLOY_KEY_PATH}" ~/.ssh/config 2>/dev/null; then
+  if ! grep -q "IdentityFile ${key_path}" ~/.ssh/config 2>/dev/null; then
     cat >> ~/.ssh/config <<EOF
 Host github.com
   HostName github.com
   User git
-  IdentityFile ${DEPLOY_KEY_PATH}
+  IdentityFile ${key_path}
   IdentitiesOnly yes
 EOF
     chmod 600 ~/.ssh/config
   fi
 
-  if ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -T git@github.com 2>&1 \
-       | grep -q "successfully authenticated"; then
-    ok "GitHub deploy key already authenticated. Skipping the manual step."
+  if github_ssh_works; then
+    ok "GitHub SSH auth works with ${key_path}. Skipping the manual step."
     return
   fi
 
@@ -375,13 +437,21 @@ EOF
        "and is the whole point of using a deploy key instead of a personal token."
   echo
   echo "----- BEGIN PUBLIC KEY -----"
-  cat "${DEPLOY_KEY_PATH}.pub"
+  print_public_key "$key_path"
   echo "----- END PUBLIC KEY -----"
   echo
 
-  until ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -T git@github.com 2>&1 \
-          | grep -q "successfully authenticated"; do
-    read -rp "Press Enter once the deploy key is added on GitHub (or Ctrl+C to abort)... "
+  while ! github_ssh_works; do
+    local reply=""
+    if ! read -rp "Press Enter once the key is added on GitHub ('s' to skip, Ctrl+C to abort)... " reply; then
+      warn "No input (non-interactive?) — skipping before GitHub auth was confirmed."
+      return
+    fi
+    if [[ "$reply" =~ ^[Ss]$ ]]; then
+      warn "Skipping before GitHub auth was confirmed — phase 6's clone will fail if the" \
+           "key isn't actually active yet."
+      return
+    fi
   done
   ok "GitHub deploy key authenticated."
 }
@@ -389,10 +459,10 @@ EOF
 # ---------------------------------------------------------------------------------------
 # Phase: clone + .env — same shape as deploy-droplet.sh's, minus the Docker-only knobs
 # (WEB_PORT) and with a three-way prompt for the database — SQLite, a local Postgres
-# (phase 8 below provisions it), or a Postgres instance you already run elsewhere.
+# (phase 7 below provisions it), or a Postgres instance you already run elsewhere.
 # ---------------------------------------------------------------------------------------
 phase_clone_and_env() {
-  log "Phase 7/14: clone the repo and configure .env"
+  log "Phase 6/13: clone the repo and configure .env"
 
   if [[ -d "$APP_DIR/.git" ]]; then
     ok "Repo already cloned at ${APP_DIR}."
@@ -456,7 +526,7 @@ phase_clone_and_env() {
       # where .env already exists and this whole block is skipped via the early `return`
       # above — the marker, not an in-memory variable, is what survives that.
       mark_done local_postgres_requested
-      ok "Local Postgres selected — phase 8 will install it and write DATABASE_URL" \
+      ok "Local Postgres selected — phase 7 will install it and write DATABASE_URL" \
          "automatically once it has real credentials to write."
       ;;
     3)
@@ -492,16 +562,16 @@ phase_clone_and_env() {
 }
 
 # ---------------------------------------------------------------------------------------
-# Phase: local PostgreSQL — only does anything if phase 7 recorded "local Postgres" as
+# Phase: local PostgreSQL — only does anything if phase 6 recorded "local Postgres" as
 # the choice; otherwise a fast no-op. Installs the server, creates a dedicated role +
 # database with a freshly generated password, writes DATABASE_URL, and tunes Postgres's
 # memory settings from this droplet's *actual* detected RAM rather than a fixed guess.
 # ---------------------------------------------------------------------------------------
 phase_postgres_local() {
-  log "Phase 8/14: local PostgreSQL (only if chosen in phase 7)"
+  log "Phase 7/13: local PostgreSQL (only if chosen in phase 6)"
 
   if ! phase_done local_postgres_requested; then
-    ok "SQLite or an external Postgres was chosen in phase 7 — nothing to provision here."
+    ok "SQLite or an external Postgres was chosen in phase 6 — nothing to provision here."
     return
   fi
   if phase_done postgres_local; then ok "Already provisioned, skipping."; return; fi
@@ -594,7 +664,7 @@ SQL
 # Phase: DNS check — identical to deploy-droplet.sh's.
 # ---------------------------------------------------------------------------------------
 phase_dns_check() {
-  log "Phase 9/14: verify DNS points at this droplet"
+  log "Phase 8/13: verify DNS points at this droplet"
 
   local hosts_line
   hosts_line=$(grep '^DJANGO_ALLOWED_HOSTS=' "${APP_DIR}/.env" | cut -d= -f2-)
@@ -633,7 +703,7 @@ phase_dns_check() {
 # pointed at gunicorn's fixed local port instead of a docker-published one.
 # ---------------------------------------------------------------------------------------
 phase_nginx_tls() {
-  log "Phase 10/14: nginx reverse proxy + TLS"
+  log "Phase 9/13: nginx reverse proxy + TLS"
 
   local hosts_line
   hosts_line=$(grep '^DJANGO_ALLOWED_HOSTS=' "${APP_DIR}/.env" | cut -d= -f2-)
@@ -689,14 +759,20 @@ EOF
 # equivalent: create the venv, install pinned dependencies, migrate, collectstatic.
 # ---------------------------------------------------------------------------------------
 phase_app_setup() {
-  log "Phase 11/14: Python venv, dependencies, migrations, static files"
+  log "Phase 10/13: Python venv, dependencies, migrations, static files"
   cd "$APP_DIR"
 
   if [[ ! -x "$(venv_python)" ]]; then
-    python3.12 -m venv env
-    ok "Created venv at ${APP_DIR}/env."
+    # Built from the distro-default python3, so this tracks whatever 3.x the image ships.
+    # phase_system_packages already enforced the >= ${PYTHON_MIN} floor, but re-check
+    # here too: on a re-run that phase is marked done and skipped, and this is the last
+    # point before a too-old interpreter would bake itself into the venv.
+    python_version_ok || die "python3 is $(system_python_version), older than the" \
+      "${PYTHON_MIN} Django 6.0 needs — see phase 4's note. Not creating the venv."
+    python3 -m venv env
+    ok "Created venv at ${APP_DIR}/env ($("$(venv_python)" --version 2>&1))."
   else
-    ok "venv already exists."
+    ok "venv already exists ($("$(venv_python)" --version 2>&1))."
   fi
 
   "$(venv_pip)" install --upgrade pip --quiet
@@ -733,7 +809,7 @@ phase_app_setup() {
 # own crash-loop backoff replace what `restart: unless-stopped` gives the Docker version.
 # ---------------------------------------------------------------------------------------
 phase_systemd_service() {
-  log "Phase 12/14: install the gunicorn systemd service"
+  log "Phase 11/13: install the gunicorn systemd service"
 
   local gunicorn_workers
   gunicorn_workers=$(compute_gunicorn_workers)
@@ -793,7 +869,7 @@ EOF
 # direct localhost hit on gunicorn in addition to the public HTTPS checks.
 # ---------------------------------------------------------------------------------------
 phase_verify() {
-  log "Phase 13/14: verify the deployment"
+  log "Phase 12/13: verify the deployment"
   cd "$APP_DIR"
 
   local hosts_line primary_domain
@@ -837,7 +913,7 @@ phase_verify() {
 # at Postgres instead.
 # ---------------------------------------------------------------------------------------
 phase_backups() {
-  log "Phase 14/14: daily backups"
+  log "Phase 13/13: daily backups"
   if phase_done backups; then ok "Already configured, skipping."; return; fi
 
   sudo mkdir -p "$BACKUP_DIR"
@@ -863,7 +939,7 @@ phase_backups() {
     fi
     ok "Daily 03:00 UTC SQLite + media backup cron installed, 7-day local retention."
   else
-    # Postgres, local (phase 8) or external (phase 7) — either way dump via .env's own
+    # Postgres, local (phase 7) or external (phase 6) — either way dump via .env's own
     # connection string rather than assuming local pg_dump credentials/trust auth exist.
     cron_line="0 3 * * * DATE=\$(date +\%F); pg_dump \"${database_url}\" | gzip > ${BACKUP_DIR}/db-\$DATE.sql.gz && tar czf ${BACKUP_DIR}/media-\$DATE.tar.gz -C ${APP_DIR}/Portfolio media && find ${BACKUP_DIR} \( -name 'db-*.sql.gz' -o -name 'media-*.tar.gz' \) -mtime +7 -delete"
     if ! command -v pg_dump &>/dev/null; then
@@ -970,13 +1046,27 @@ EOF
 # Entry point
 # ---------------------------------------------------------------------------------------
 main() {
+  # This script no longer bootstraps its own user. It must run *as* the preconfigured
+  # non-root "${DEPLOY_USER}" account — not as root (later phases write into that user's
+  # $HOME, crontab, and venv, and the systemd unit runs as that user), and not as some
+  # other login.
   if [[ $EUID -eq 0 ]]; then
-    phase_root_bootstrap   # exits on its own
+    die "Don't run this as root. It must run as the preconfigured '${DEPLOY_USER}' user" \
+        "(create it when you build the droplet: cloud-init 'users:', or" \
+        "'adduser ${DEPLOY_USER} && usermod -aG sudo ${DEPLOY_USER}'), then run this as" \
+        "${DEPLOY_USER}."
   fi
 
   if [[ "$(whoami)" != "$DEPLOY_USER" ]]; then
-    die "Run this as root (first time only) or as '${DEPLOY_USER}' (every time after)." \
-        "You're currently: $(whoami)."
+    die "Run this as the '${DEPLOY_USER}' user. You're currently: $(whoami)."
+  fi
+
+  # Every phase from here on uses sudo. Prime the sudo timestamp now (this prompts once,
+  # interactively, if a password is required) and fail early with a clear message if this
+  # user can't sudo at all — better than a confusing failure three phases deep.
+  if ! sudo -v; then
+    die "'${DEPLOY_USER}' can't use sudo (or sudo needs a password and none was given)." \
+        "Add ${DEPLOY_USER} to the sudo group, or run where you can answer the prompt."
   fi
 
   phase_ssh_hardening
