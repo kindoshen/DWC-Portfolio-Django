@@ -161,6 +161,27 @@ PYEOF
 venv_python() { echo "${APP_DIR}/env/bin/python"; }
 venv_pip()    { echo "${APP_DIR}/env/bin/pip"; }
 
+# THE .env this script reads. Always APP_DIR/.env — never a .env that happens to sit next
+# to the copy of the script you launched, or in some other checkout. If you keep the app
+# somewhere other than /opt/designwithcory, change APP_DIR at the top, not your cwd.
+env_file() { echo "${APP_DIR}/.env"; }
+
+# env_get KEY — value of KEY from env_file, with an optional `export ` prefix, surrounding
+# whitespace, one layer of surrounding quotes, and a trailing CR (CRLF files) all
+# stripped. Prints nothing (and still returns 0) when the key is absent or blank; returns
+# 1 ONLY when env_file itself doesn't exist, so callers can tell those two cases apart.
+env_get() {
+  local key="$1" file val
+  file=$(env_file)
+  [[ -f "$file" ]] || return 1
+  val=$(sed -n -E "s/^[[:space:]]*(export[[:space:]]+)?${key}[[:space:]]*=[[:space:]]*//p" "$file" | tail -n1)
+  val=${val%$'\r'}                      # trailing CR from a CRLF file
+  val=${val%"${val##*[![:space:]]}"}    # trailing whitespace
+  val=${val#\"}; val=${val%\"}          # one layer of surrounding double quotes
+  val=${val#\'}; val=${val%\'}          # ...or single quotes
+  printf '%s' "$val"
+}
+
 # "a.com, www.a.com" -> "https://a.com,https://www.a.com". DJANGO_CSRF_TRUSTED_ORIGINS has
 # to track DJANGO_ALLOWED_HOSTS one-for-one (Django needs the scheme on each), so both the
 # first-time write and the re-run update below derive it the same way from one host list.
@@ -477,8 +498,8 @@ EOF
 # ---------------------------------------------------------------------------------------
 update_allowed_hosts() {
   local current
-  current=$(grep '^DJANGO_ALLOWED_HOSTS=' .env | cut -d= -f2-)
-  echo "Current DJANGO_ALLOWED_HOSTS: ${current:-<empty>}"
+  current=$(env_get DJANGO_ALLOWED_HOSTS || true)
+  echo "Current DJANGO_ALLOWED_HOSTS (in $(env_file)): ${current:-<empty>}"
   confirm "Update the allowed hosts / domains?" || { ok "Leaving DJANGO_ALLOWED_HOSTS unchanged."; return 0; }
 
   local new_hosts
@@ -525,8 +546,8 @@ phase_clone_and_env() {
   cd "$APP_DIR"
 
   if [[ -f .env ]]; then
-    ok ".env already exists — not regenerating it. Delete it first if you want this" \
-       "script to rebuild it from scratch."
+    ok ".env already exists at $(env_file) — not regenerating it. Delete it first if you" \
+       "want this script to rebuild it from scratch."
     # ...but domains do change on a live deploy (added a www variant, moved domain,
     # added a subdomain), and every later phase reads them straight from .env, so offer
     # to update just the host list in place.
@@ -718,10 +739,15 @@ phase_dns_check() {
   log "Phase 8/13: verify DNS points at this droplet"
 
   local hosts_line
-  hosts_line=$(grep '^DJANGO_ALLOWED_HOSTS=' "${APP_DIR}/.env" | cut -d= -f2-)
-  IFS=',' read -ra domains <<< "$hosts_line"
+  hosts_line=$(env_get DJANGO_ALLOWED_HOSTS) || die \
+    "No .env at $(env_file). Run phase 6 (clone + .env) first — or, if the app lives" \
+    "somewhere else, point APP_DIR at the top of this script at the right directory."
+  IFS=',' read -ra domains <<< "${hosts_line// /}"
   if [[ ${#domains[@]} -eq 0 || -z "${domains[0]}" ]]; then
-    die "DJANGO_ALLOWED_HOSTS in .env is empty — fix that before continuing."
+    die "DJANGO_ALLOWED_HOSTS is blank in $(env_file). Set it there (comma-separated" \
+        "hostnames) and re-run. This script reads ONLY that file — a .env you edited in" \
+        "another checkout or next to the script is not picked up. On a re-run, phase 6" \
+        "also offers to set the host list for you."
   fi
 
   local droplet_ip
@@ -757,8 +783,11 @@ phase_nginx_tls() {
   log "Phase 9/13: nginx reverse proxy + TLS"
 
   local hosts_line
-  hosts_line=$(grep '^DJANGO_ALLOWED_HOSTS=' "${APP_DIR}/.env" | cut -d= -f2-)
+  hosts_line=$(env_get DJANGO_ALLOWED_HOSTS) || die \
+    "No .env at $(env_file) — run phase 6 first, or fix APP_DIR at the top of this script."
   local server_names="${hosts_line//,/ }"
+  [[ -n "${server_names// /}" ]] || die \
+    "DJANGO_ALLOWED_HOSTS is blank in $(env_file) — set it and re-run."
 
   if [[ ! -f "/etc/nginx/sites-available/${NGINX_SITE_NAME}" ]]; then
     sudo tee "/etc/nginx/sites-available/${NGINX_SITE_NAME}" >/dev/null <<EOF
@@ -808,7 +837,7 @@ EOF
   fi
 
   local admin_email
-  admin_email=$(grep '^DJANGO_ADMIN_EMAIL=' "${APP_DIR}/.env" | cut -d= -f2-)
+  admin_email=$(env_get DJANGO_ADMIN_EMAIL || true)
   [[ -n "$admin_email" ]] || ask admin_email "Email for Let's Encrypt renewal notices"
 
   local domain_args=()
@@ -941,7 +970,7 @@ phase_verify() {
   cd "$APP_DIR"
 
   local hosts_line primary_domain
-  hosts_line=$(grep '^DJANGO_ALLOWED_HOSTS=' .env | cut -d= -f2-)
+  hosts_line=$(env_get DJANGO_ALLOWED_HOSTS || true)
   primary_domain="${hosts_line%%,*}"
 
   local code
@@ -988,7 +1017,7 @@ phase_backups() {
   sudo chown "${DEPLOY_USER}:${DEPLOY_USER}" "$BACKUP_DIR"
 
   local database_url
-  database_url=$(grep '^DATABASE_URL=' "${APP_DIR}/.env" | cut -d= -f2-)
+  database_url=$(env_get DATABASE_URL || true)
 
   # Both branches: compute the date ONCE into a shell variable rather than calling `date`
   # separately per filename — a job that started just before midnight could otherwise tag
