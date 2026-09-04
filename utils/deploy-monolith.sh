@@ -161,6 +161,19 @@ PYEOF
 venv_python() { echo "${APP_DIR}/env/bin/python"; }
 venv_pip()    { echo "${APP_DIR}/env/bin/pip"; }
 
+# "a.com, www.a.com" -> "https://a.com,https://www.a.com". DJANGO_CSRF_TRUSTED_ORIGINS has
+# to track DJANGO_ALLOWED_HOSTS one-for-one (Django needs the scheme on each), so both the
+# first-time write and the re-run update below derive it the same way from one host list.
+csrf_origins_for() {
+  local hosts="$1" out="" h
+  IFS=',' read -ra _h <<< "${hosts// /}"
+  for h in "${_h[@]}"; do
+    [[ -n "$h" ]] || continue
+    out+="${out:+,}https://${h}"
+  done
+  echo "$out"
+}
+
 # Version of the distro-default python3 the venv is built from, as e.g. "3.14.4".
 system_python_version() { python3 -c 'import platform; print(platform.python_version())'; }
 
@@ -457,6 +470,42 @@ EOF
 }
 
 # ---------------------------------------------------------------------------------------
+# Re-run helper: rewrite DJANGO_ALLOWED_HOSTS (and DJANGO_CSRF_TRUSTED_ORIGINS, kept in
+# lock-step) in an existing .env without touching anything else. Called from
+# phase_clone_and_env when .env already exists. Declining the prompt — or a
+# non-interactive run — leaves both values exactly as they were.
+# ---------------------------------------------------------------------------------------
+update_allowed_hosts() {
+  local current
+  current=$(grep '^DJANGO_ALLOWED_HOSTS=' .env | cut -d= -f2-)
+  echo "Current DJANGO_ALLOWED_HOSTS: ${current:-<empty>}"
+  confirm "Update the allowed hosts / domains?" || { ok "Leaving DJANGO_ALLOWED_HOSTS unchanged."; return 0; }
+
+  local new_hosts
+  ask new_hosts "Comma-separated hostnames (e.g. designwithcory.com,www.designwithcory.com)" "$current"
+  new_hosts="${new_hosts// /}"   # tolerate 'a.com, b.com'
+  if [[ -z "$new_hosts" ]]; then
+    warn "Empty host list — leaving DJANGO_ALLOWED_HOSTS unchanged."
+    return 0
+  fi
+  if [[ "$new_hosts" == "$current" ]]; then
+    ok "Host list unchanged."
+    return 0
+  fi
+
+  local new_csrf
+  new_csrf=$(csrf_origins_for "$new_hosts")
+  set_env_var DJANGO_ALLOWED_HOSTS "$new_hosts"
+  set_env_var DJANGO_CSRF_TRUSTED_ORIGINS "$new_csrf"
+  ok "DJANGO_ALLOWED_HOSTS        -> ${new_hosts}"
+  ok "DJANGO_CSRF_TRUSTED_ORIGINS -> ${new_csrf}"
+  warn "phase 9 re-syncs nginx's server_name from this and reloads. If you ADDED a" \
+       "hostname and a TLS cert already exists, that cert won't cover it until you run:" \
+       "sudo certbot --nginx --expand -d ${new_hosts//,/ -d } — then" \
+       "sudo systemctl restart ${SERVICE_NAME}"
+}
+
+# ---------------------------------------------------------------------------------------
 # Phase: clone + .env — same shape as deploy-droplet.sh's, minus the Docker-only knobs
 # (WEB_PORT) and with a three-way prompt for the database — SQLite, a local Postgres
 # (phase 7 below provisions it), or a Postgres instance you already run elsewhere.
@@ -476,8 +525,12 @@ phase_clone_and_env() {
   cd "$APP_DIR"
 
   if [[ -f .env ]]; then
-    ok ".env already exists — leaving it alone. Delete it first if you want this script" \
-       "to regenerate it from scratch."
+    ok ".env already exists — not regenerating it. Delete it first if you want this" \
+       "script to rebuild it from scratch."
+    # ...but domains do change on a live deploy (added a www variant, moved domain,
+    # added a subdomain), and every later phase reads them straight from .env, so offer
+    # to update just the host list in place.
+    update_allowed_hosts
     return
   fi
 
@@ -496,11 +549,9 @@ phase_clone_and_env() {
   ask admin_email "Email for 500-error alerts + Let's Encrypt renewal notices"
 
   local allowed_hosts="$primary_domain"
-  local csrf_origins="https://${primary_domain}"
-  if [[ -n "$www_domain" ]]; then
-    allowed_hosts="${allowed_hosts},${www_domain}"
-    csrf_origins="${csrf_origins},https://${www_domain}"
-  fi
+  [[ -n "$www_domain" ]] && allowed_hosts="${allowed_hosts},${www_domain}"
+  local csrf_origins
+  csrf_origins=$(csrf_origins_for "$allowed_hosts")
 
   set_env_var DJANGO_SECRET_KEY "$secret_key"
   set_env_var DJANGO_DEBUG "False"
@@ -731,7 +782,24 @@ EOF
     sudo systemctl reload nginx
     ok "nginx site configured for: ${server_names}"
   else
-    ok "nginx site already configured, skipping."
+    # Site exists already. Keep its server_name(s) in step with DJANGO_ALLOWED_HOSTS in
+    # case the host list changed on a re-run (see update_allowed_hosts) — but only
+    # rewrite when it's actually drifted, so an ordinary re-run stays a no-op. certbot
+    # may have added a second server{} block; the sed hits the server_name line in both.
+    local site="/etc/nginx/sites-available/${NGINX_SITE_NAME}" want have
+    want=$(printf '%s\n' ${server_names} | sort -u | paste -sd' ' -)
+    have=$(sudo sed -n 's/^[[:space:]]*server_name[[:space:]]\+\([^;]*\);.*/\1/p' "$site" \
+             | tr ' ' '\n' | sed '/^$/d' | sort -u | paste -sd' ' -)
+    if [[ -n "$want" && "$want" != "$have" ]]; then
+      sudo sed -i "s/^\(\s*server_name\s\+\).*/\1${server_names};/" "$site"
+      sudo nginx -t
+      sudo systemctl reload nginx
+      ok "nginx server_name re-synced from .env: [${have}] -> [${server_names}]"
+      warn "If a TLS cert already exists it still covers only the old names — run" \
+           "'sudo certbot --nginx --expand -d ${server_names// / -d }' to add the rest."
+    else
+      ok "nginx site already configured for: ${server_names}"
+    fi
   fi
 
   if sudo test -d "/etc/letsencrypt/live" && sudo find /etc/letsencrypt/live -mindepth 1 -maxdepth 1 -type d | grep -q .; then
